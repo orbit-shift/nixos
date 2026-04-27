@@ -122,6 +122,15 @@
       specialArgs = { inherit inputs; dataDir = _dataDir; };
       modules = [
         "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+
+        # 服务器通用模块（不含 nomad）
+        ../../modules/common/sys.nix
+        ../../modules/common/base.nix
+        ../../modules/common/users.nix
+        ../../modules/common/network.nix
+        ../../modules/common/container.nix
+        ../../modules/common/extra.nix
+
         {
           # ISO 镜像配置
           isoImage.volumeID = "my-nixos-live";
