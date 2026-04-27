@@ -21,5 +21,4 @@
   ];
 
   networking.hostName = "workstation";
-  system.stateVersion = "25.05";
 }

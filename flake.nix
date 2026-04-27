@@ -3,11 +3,11 @@
 
   # 统一数据目录前缀（podman/quadlet 服务、rime 词库等）
   # 按需修改为实际路径，如 "/home/master/data"
-  _dataDir = "/path/to/data";
+  _dataDir = "/data";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";       # 工作站 / vbox / ISO
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";   # 服务器
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";   # 服务器
 
     disko = {
       url = "github:nix-community/disko";
@@ -171,9 +171,6 @@
               let base = builtins.baseNameOf path; in
               base != ".git" && type != "symlink" && !(builtins.hasSuffix ".qcow2" path) && base != "secrets"
             ) ./.;
-        }
-        {
-          system.stateVersion = "26.05";
         }
       ];
     };

@@ -23,5 +23,4 @@
   virtualisation.virtualbox.guest.enable = true;
 
   networking.hostName = "vbox";
-  system.stateVersion = "26.05";
 }
