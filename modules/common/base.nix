@@ -35,17 +35,13 @@
   # root 账号锁定
   users.users.root.hashedPassword = "!";
 
-  # SSH：内网允许密码，外网仅 key
+  # SSH：仅允许密钥登录
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
     };
-    extraConfig = ''
-      Match Address 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-          PasswordAuthentication yes
-    '';
   };
 
   # sysctl
