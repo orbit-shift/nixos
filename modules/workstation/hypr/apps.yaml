@@ -1,0 +1,68 @@
+apps:
+  rules:
+    - keys: [1, 12]
+      filter:
+        - app_id =~ ghostty
+        - title starts-with dev
+      cmd:
+        - ghostty
+        - -e
+        - zellij
+        - attach
+        - --create
+        - dev
+    - keys: [3, 9]
+      filter:
+        - app_id =~ vivaldi
+      cmd:
+        - vivaldi
+    - keys: 7
+      filter:
+        - app_id =~ ghostty
+        - not title starts-with dev
+      cmd:
+        - ghostty
+    - keys: 4
+      filter:
+        - app_id =~ Foliate
+      cmd:
+        - foliate
+    - keys: 11
+      filter:
+        - app_id =~ wechat
+      cmd:
+        - wechat
+    - keys: 10
+      filter:
+        - title =~ WeChat
+      cmd: []
+    - keys: 5
+      filter:
+        - app_id =~ CosmicFile
+      cmd:
+        - cosmic-files
+    - keys: 6
+      filter:
+        - app_id =~ firefox
+      cmd:
+        - firefox
+    - keys: 2
+      filter:
+        - app_id =~ Zed
+      cmd:
+        - zed
+    - keys: 8
+      filter:
+        - app_id =~ code
+      cmd:
+        - code
+
+keybindings:
+  - modifiers:
+      - Super
+      - Ctrl
+    key: s
+    action: ToggleSticky
+  - modifiers: [Super]
+    key: q
+    action: Spawn("flameshot gui")

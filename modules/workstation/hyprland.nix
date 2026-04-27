@@ -1,0 +1,104 @@
+{ pkgs, lib, dataDir, ... }:
+
+let
+  cfg = config.wayland.windowManager.hyprland;
+in {
+  options.wayland.windowManager.hyprland.enable = lib.mkEnableOption "Hyprland 桌面环境（含完整辅助工具链）";
+
+  config = lib.mkIf cfg.enable {
+    # ── Hyprland 合成器 ────────────────────────────────────
+    programs.hyprland.enable = true;
+
+    # ── 显示管理器 (SDDM) ─────────────────────────────────
+    services.displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+
+    # ── Pipewire Audio ─────────────────────────────────────
+    services.pipewire = {
+      enable = true;
+      alsa.enable = true;
+      pulse.enable = true;
+      jack.enable = true;
+    };
+
+
+
+    # ── XDG Desktop Portal (Hyprland backend) ──────────────
+    xdg.portal = {
+      enable = true;
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      config.common.default = "hyprland";
+    };
+
+
+
+    # ── 桌面环境辅助工具链 ─────────────────────────────────
+    environment.systemPackages = with pkgs; [
+      # 状态栏
+      waybar
+
+      # 应用启动器
+      wofi
+
+      # 通知守护进程
+      mako
+
+      # 截图 & 录屏
+      grim
+      slurp
+      swappy
+
+      # 壁纸管理
+      hyprpaper
+
+      # 剪贴板管理
+      wl-clipboard
+      cliphist
+
+      # 登出/锁屏菜单
+      wlogout
+      swaylock-effects
+
+      # 电源管理
+      brightnessctl
+      playerctl
+
+      # 系统托盘 & 网络管理
+      networkmanagerapplet
+      pavucontrol
+    ];
+
+    # ── Python 脚本依赖 ─────────────────────────────────────
+    environment.systemPackages = with pkgs; [
+      (python3.withPackages (ps: [ ps.pyyaml ]))
+    ];
+
+    # ── 部署 toggle 脚本与 apps.yaml 配置到 /etc/hypr/ ──────
+    environment.etc = {
+      "hypr/scripts/hypr_toggle.py".source = ./hypr/scripts/hypr_toggle.py;
+      "hypr/apps.yaml".source = ./hypr/apps.yaml;
+    };
+
+    # ── 快捷键：Focus Window (F1-F12) ───────────────────────
+    wayland.windowManager.hyprland.settings = {
+      bind = [
+        ", F1, exec, python3 /etc/hypr/scripts/hypr_toggle.py 1"
+        ", F2, exec, python3 /etc/hypr/scripts/hypr_toggle.py 2"
+        ", F3, exec, python3 /etc/hypr/scripts/hypr_toggle.py 3"
+        ", F4, exec, python3 /etc/hypr/scripts/hypr_toggle.py 4"
+        ", F5, exec, python3 /etc/hypr/scripts/hypr_toggle.py 5"
+        ", F6, exec, python3 /etc/hypr/scripts/hypr_toggle.py 6"
+        ", F7, exec, python3 /etc/hypr/scripts/hypr_toggle.py 7"
+        ", F8, exec, python3 /etc/hypr/scripts/hypr_toggle.py 8"
+        ", F9, exec, python3 /etc/hypr/scripts/hypr_toggle.py 9"
+        ", F10, exec, python3 /etc/hypr/scripts/hypr_toggle.py 10"
+        ", F11, exec, python3 /etc/hypr/scripts/hypr_toggle.py 11"
+        ", F12, exec, python3 /etc/hypr/scripts/hypr_toggle.py 12"
+      ];
+    };
+
+    # 剪贴板历史由用户级 home-manager 配置管理
+  };
+}
