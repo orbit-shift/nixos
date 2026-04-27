@@ -1,11 +1,32 @@
-{ config, pkgs, ... }: {
-  # Nushell 启用
-  # 硬核用户自行管理 config.nu / env.nu / 补全 / prompt 等
-  programs.nushell.enable = true;
+{ config, pkgs, lib, inputs, ... }:
 
-  # 链接用户自有的 nu/ 配置库到 ~/.config/nushell
-  # 假设 flake 仓库 clone 在 ~/nixos/
-  home.file.".config/nushell".source =
-    config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/nixos/nu";
+let
+  cfg = config.programs.nushell;
+  nushellDir = "${config.home.homeDirectory}/Configuration/nushell";
+in
+{
+  options.programs.nushell.developMode = lib.mkEnableOption
+    "Use symlink + git clone for nushell config (for development)";
+
+  config = lib.mkMerge [
+    # 始终启用 nushell
+    { programs.nushell.enable = true; }
+
+    # 工作站开发模式：符号链接 + 自动克隆
+    (lib.mkIf cfg.developMode {
+      home.file.".config/nushell".source =
+        config.lib.file.mkOutOfStoreSymlink nushellDir;
+
+      home.activation.cloneNushellConfig = lib.dag.entryAfter [ "writeBoundary" ] ''
+        if [ ! -d "${nushellDir}/.git" ]; then
+          $DRY_RUN_CMD git clone https://github.com/fj0r/nushell.git "${nushellDir}"
+        fi
+      '';
+    })
+
+    # 服务器/只读模式：通过 flake input 部署
+    (lib.mkIf (!cfg.developMode) {
+      xdg.configFile."nushell".source = "${inputs.nushell-config}";
+    })
+  ];
 }

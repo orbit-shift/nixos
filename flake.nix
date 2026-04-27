@@ -19,9 +19,13 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nushell-config = {
+      url = "github:fj0r/nushell";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, disko, home-manager, nixos-generators, ... }@inputs: {
+  outputs = { self, nixpkgs, disko, home-manager, nixos-generators, nushell-config, ... }@inputs: {
     nixosConfigurations = {
 
       workstation = nixpkgs.lib.nixosSystem {
