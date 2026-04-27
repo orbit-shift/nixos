@@ -1,0 +1,75 @@
+{ pkgs, lib, ... }: {
+  # ── Nix 自身配置 ────────────────────────────────────────
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true;
+    substituters = [
+      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      "https://mirror.sjtu.edu.cn/nix-channels/store"
+      "https://cache.nixos.org"
+    ];
+    builders-use-substitutes = true;
+  };
+
+  # 每周自动清理未使用的包
+  nix.gc = {
+    automatic = lib.mkDefault true;
+    dates = lib.mkDefault "weekly";
+    options = lib.mkDefault "--delete-older-than 7d";
+  };
+
+  # 全局允许非自由软件
+  nixpkgs.config.allowUnfree = true;
+
+  # Locale & time
+  time.timeZone = "Asia/Shanghai";
+  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings.LC_ALL = "zh_CN.UTF-8";
+
+  # sudo 免密码（wheel 组）
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = false;
+  };
+
+  # root 账号锁定
+  users.users.root.hashedPassword = "!";
+
+  # SSH：内网允许密码，外网仅 key
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+    };
+    extraConfig = ''
+      Match Address 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+          PasswordAuthentication yes
+    '';
+  };
+
+  # sysctl
+  boot.kernel.sysctl = {
+    "vm.swappiness"                    = 10;
+    "vm.vfs_cache_pressure"            = 50;
+    "vm.dirty_ratio"                   = 30;
+    "vm.dirty_background_ratio"        = 10;
+    "fs.file-max"                      = 1000000;
+    "fs.inotify.max_user_watches"      = 524288;
+    "net.ipv4.ip_forward"              = 1;
+    "net.ipv6.conf.all.forwarding"     = 1;
+    "net.ipv4.tcp_congestion_control"  = "bbr";
+    "net.core.default_qdisc"           = "fq";
+    "net.core.rmem_max"                = 16777216;
+    "net.core.wmem_max"                = 16777216;
+    "net.ipv4.tcp_rmem"                = "4096 87380 16777216";
+    "net.ipv4.tcp_wmem"                = "4096 65536 16777216";
+  };
+
+  # 基础 CLI 工具（两台机器都有）
+  environment.systemPackages = with pkgs; [
+    git curl wget rsync
+    jq tree file unzip fd ripgrep
+    dust glow
+  ];
+}
