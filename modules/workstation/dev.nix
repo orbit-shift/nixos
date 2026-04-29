@@ -16,13 +16,19 @@
     (python3.withPackages (ps: with ps; [
       virtualenv
       # Web
-      httpx aiofile aiostream fastapi uvicorn uvloop httptools websockets
+      httpx fastapi uvicorn websockets
+      # Async
+      aiofile aiostream
       # Dev
       ty debugpy pytest
       # CLI
       ipython typer
-      # Data & Utils
-      polars pydantic pydantic-graph pydantic-settings pyparsing jinja2 boltons decorator shortuuid
+      # Data
+      polars lancedb
+
+      # Utils
+      pydantic pydantic-graph pydantic-settings
+      pyparsing jinja2 boltons decorator shortuuid
       # Logging & Codec
       structlog python-json-logger pyyaml
       # Compression
@@ -67,5 +73,14 @@
     RUSTC_WRAPPER = "sccache";
   };
 
+
+  # ── Databases (默认禁用) ─────────────────────────────────
+  services.postgresql = {
+    enable = false;
+  };
+
+  services.surrealdb = {
+    enable = false;
+  };
 
 }
