@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   # ── Podman ───────────────────────────────────────────────
   virtualisation.podman = {
     enable = true;
@@ -17,10 +17,7 @@
   };
 
   # ── Container Registries ─────────────────────────────────
-  virtualisation.containers.registries.search = [ "docker.io" ];
-  virtualisation.containers.registries.insecure = [ "registry.s" "registry.d" "172.178.5.123:5000" "localhost:5000" ];
-
-  environment.etc."containers/registries.conf".text = ''
+  environment.etc."containers/registries.conf".text = lib.mkForce ''
     unqualified-search-registries = ["docker.io"]
 
     [[registry]]
@@ -48,11 +45,13 @@
     location = "ghcr.lizzie.fun"
   '';
 
-  environment.etc."containers/storage.conf".text = ''
+
+  # Podman storage 配置（路径放在 /root 下）
+  environment.etc."containers/storage.conf".text = lib.mkForce ''
     [storage]
     driver = "overlay"
-    runroot = "/run/containers/storage"
-    graphroot = "/var/lib/containers/storage"
+    runroot = "/root/.local/share/containers/storage/runroot"
+    graphroot = "/root/.local/share/containers/storage"
   '';
   # ── Container Image Tools ───────────────────────────────
   environment.systemPackages = with pkgs; [

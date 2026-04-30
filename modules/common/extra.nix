@@ -32,6 +32,6 @@
 
     # ── 存储与数据库 ──────────────────────────────────
     s3fs        # S3 文件系统挂载
-    sqlite3     # SQLite CLI
+    sqlite      # SQLite CLI
   ];
 }

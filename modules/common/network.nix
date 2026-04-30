@@ -8,7 +8,7 @@
 
   # 网络诊断与管理工具
   environment.systemPackages = with pkgs; [
-    openbsd-netcat
-    resolvconf
+    netcat
+    openresolv
   ];
 }

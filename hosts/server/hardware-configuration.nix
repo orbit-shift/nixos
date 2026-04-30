@@ -13,17 +13,8 @@
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
-  # 以下 UUID 需替换为实际磁盘的 UUID（使用 `lsblk -f` 查看）
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-      fsType = "xfs";
-    };
+  # fileSystems 由 disko (disk.nix) 管理，此处不重复定义
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/XXXX-XXXX";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
 
   swapDevices = [ ];
 

@@ -32,11 +32,11 @@
       keys.normal = {
         space.space = "goto_word";
         space.o = [
-          ':sh rm -f /tmp/unique-file'
-          ':insert-output yazi %{buffer_name} --chooser-file=/tmp/unique-file'
-          ':insert-output echo "\x1b[?1049h\x1b[?2004h" > /dev/tty'
-          ':open %sh{cat /tmp/unique-file}'
-          ':redraw'
+          ":sh rm -f /tmp/unique-file"
+          ":insert-output yazi %{buffer_name} --chooser-file=/tmp/unique-file"
+          ":insert-output echo \"\\x1b[?1049h\\x1b[?2004h\" > /dev/tty"
+          ":open %sh{cat /tmp/unique-file}"
+          ":redraw"
         ];
         "A-j" = "page_cursor_half_down";
         "A-k" = "page_cursor_half_up";

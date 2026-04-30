@@ -20,7 +20,6 @@
       diff.algorithm       = "histogram";
       core = {
         editor    = "hx";
-        pager     = "glow";
         autocrlf  = false;
       };
       url = {
