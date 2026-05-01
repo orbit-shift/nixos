@@ -173,6 +173,9 @@
           networking.usePredictableInterfaceNames = false;
           networking.interfaces.eth0.useDHCP = true;
 
+          # 登录配置
+          services.getty.autologinUser = "master";
+
           # 局域网发现（avahi/mDNS）
           services.avahi = {
             enable = true;
@@ -204,7 +207,7 @@
           environment.etc.nixcfg.source = builtins.filterSource
             (path: type:
               let base = builtins.baseNameOf path; in
-              base != ".git" && type != "symlink" && !(builtins.hasSuffix ".qcow2" path) && base != "secrets"
+              base != ".git" && type != "symlink" && !(lib.hasSuffix ".qcow2" path) && base != "secrets"
             ) ./.;
         })
       ];

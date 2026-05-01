@@ -5,7 +5,7 @@
     auto-optimise-store = true;
     substituters = [
       "https://mirrors.ustc.edu.cn/nix-channels/store"
-      "https://mirror.sjtu.edu.cn/nix-channels/store"
+      # "https://mirror.sjtu.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
     ];
     builders-use-substitutes = true;
@@ -33,7 +33,10 @@
   };
 
   # root 账号锁定
-  users.users.root.hashedPassword = "!";
+  users.users.root = {
+    hashedPassword = "!";
+    initialHashedPassword = lib.mkForce null;  # 清除默认的空字符串，消除多密码选项警告
+  };
 
   # SSH：仅允许密钥登录
   services.openssh = {

@@ -85,7 +85,7 @@
 
     # ── 隐式包：workstation/input-method.nix ────────────
     # fcitx5 输入法全家桶
-    fcitx5 fcitx5-gtk fcitx5-rime fcitx5-chinese-addons
+    fcitx5 fcitx5-gtk fcitx5-rime qt6Packages.fcitx5-chinese-addons
 
     # ── 隐式包：workstation/fonts.nix ───────────────────
     noto-fonts noto-fonts-cjk-sans noto-fonts-color-emoji lilex
