@@ -126,15 +126,15 @@
         "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
 
         # 服务器通用模块（不含 nomad）
-        ../../modules/common/sys.nix
-        ../../modules/common/base.nix
-        ../../modules/common/users.nix
-        ../../modules/common/network.nix
-        ../../modules/common/container.nix
-        ../../modules/common/extra.nix
+        ./modules/common/sys.nix
+        ./modules/common/base.nix
+        ./modules/common/users.nix
+        ./modules/common/network.nix
+        ./modules/common/container.nix
+        ./modules/common/extra.nix
 
         # ISO 包缓存（所有项目依赖包，安装时无需联网下载）
-        ../../modules/iso/cache.nix
+        ./modules/iso/cache.nix
 
         # 内置 disko 及分区工具，live 环境可离线使用
         inputs.disko.nixosModules.disko
@@ -146,12 +146,16 @@
             useGlobalPkgs = true;
             useUserPackages = true;
             extraSpecialArgs = { inherit inputs dataDir; };
-            users.master = import ./modules/home/shell.nix;
+            users.master = {
+              imports = [ ./modules/home/shell.nix ];
+              home.stateVersion = "26.05";
+            };
           };
         }
 
-        {
+        ({ lib, ... }: {
           # ISO 镜像配置
+          nixpkgs.config.problems.handlers = { zfs.broken = "ignore"; };
           isoImage.volumeID = "my-nixos-live";
           isoImage.isoName = "my-nixos-live.iso";
           # 使用 zstd 压缩，比 xz 快 6 倍，体积仅大 15%
@@ -159,6 +163,9 @@
 
           # 文件系统支持（xfs 为主，btrfs 可选，无 zfs）
           boot.supportedFilesystems = [ "xfs" "btrfs" ];
+
+          # 强制覆盖 sys.nix 中的 bootloader timeout，避免与 ISO 默认配置冲突
+          boot.loader.timeout = lib.mkForce 10;
 
           # 网络配置
           networking.hostName = "my-nixos-live";
@@ -183,7 +190,7 @@
           nix.settings.experimental-features = [ "nix-command" "flakes" ];
           services.openssh = {
             enable = true;
-            settings.PermitRootLogin = "yes";
+            settings.PermitRootLogin = lib.mkForce "yes";
           };
 
           # 临时构建空间（防止 ISO 环境下 /tmp 或 /nix 空间不足）
@@ -199,7 +206,7 @@
               let base = builtins.baseNameOf path; in
               base != ".git" && type != "symlink" && !(builtins.hasSuffix ".qcow2" path) && base != "secrets"
             ) ./.;
-        }
+        })
       ];
     };
   };

@@ -66,7 +66,6 @@ in {
   # ── CLI 工具 ───────────────────────────────────────────
   environment.systemPackages = with pkgs; [
     kubectl
-    kubeadm
     kubernetes-helm
   ];
 

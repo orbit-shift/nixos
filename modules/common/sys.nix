@@ -3,11 +3,11 @@
 {
   # ── Bootloader: systemd-boot ─────────────────────────────
   boot.loader.systemd-boot = {
-    enable = true;
-    configurationLimit = 10;
+    enable = lib.mkDefault true;
+    configurationLimit = lib.mkDefault 10;
   };
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.timeout = 3;
+  boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
+  boot.loader.timeout = lib.mkDefault 3;
 
   # ── Kernel ───────────────────────────────────────────────
   boot.kernelPackages = pkgs.linuxPackages_latest;

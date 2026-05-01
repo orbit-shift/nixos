@@ -12,12 +12,13 @@
     # ── common/extra.nix ─────────────────────────────────
     glow fzf duckdb termshark neovim
     strace tcpdump socat lsof
+    htop bottom
     websocat iproute2 net-tools iputils
     patch zip
-    s3fs sqlite3
+    s3fs sqlite
 
     # ── common/network.nix ───────────────────────────────
-    openbsd-netcat resolvconf
+    netcat openresolv
 
     # ── 隐式包：common/sys.nix ──────────────────────────
     # networking.networkmanager.enable, services.pipewire.enable
@@ -38,15 +39,26 @@
     wechat-uos telegram-desktop
 
     # ── workstation/extra.nix ────────────────────────────
-    surrealist wps-office zathura zathura-pdf-mupdf foliate
+    surrealist zathura foliate
 
     # ── workstation/dev.nix ──────────────────────────────
     bun uv python3
+    python3Packages.virtualenv
+    python3Packages.httpx python3Packages.fastapi python3Packages.uvicorn python3Packages.websockets
+    python3Packages.aiofile python3Packages.aiostream
+    python3Packages.ty python3Packages.debugpy python3Packages.pytest
+    python3Packages.ipython python3Packages.typer
+    python3Packages.polars python3Packages.lancedb
+    python3Packages.pydantic python3Packages.pydantic-graph python3Packages.pydantic-settings
+    python3Packages.pyparsing python3Packages.jinja2 python3Packages.boltons python3Packages.decorator python3Packages.shortuuid
+    python3Packages.structlog python3Packages.python-json-logger python3Packages.pyyaml
+    python3Packages.zstandard
+    vscode-langservers-extracted yaml-language-server
     rustup cargo rustc rustfmt clippy rust-analyzer sccache
     haskellPackages.ghc haskellPackages.cabal-install
     haskellPackages.stack haskellPackages.haskell-language-server
     wasmtime gcc cmake gnumake pkg-config
-    kubectl kubeadm kubernetes-helm
+    kubectl kubernetes-helm
 
     # ── workstation/laptop.nix ───────────────────────────
     brightnessctl auto-cpufreq
@@ -73,12 +85,11 @@
 
     # ── 隐式包：workstation/input-method.nix ────────────
     # fcitx5 输入法全家桶
-    fcitx5 fcitx5-gtk fcitx5-qt fcitx5-rime fcitx5-chinese-addons rime-wubi
+    fcitx5 fcitx5-gtk fcitx5-rime fcitx5-chinese-addons
 
     # ── 隐式包：workstation/fonts.nix ───────────────────
-    noto-fonts noto-fonts-cjk-sans noto-fonts-emoji lilex wqy-zenhei
-    # fonts.packages (nerdfonts override)
-    (nerdfonts.override { fonts = [ "Lilex" "JetBrainsMono" ]; })
+    noto-fonts noto-fonts-cjk-sans noto-fonts-color-emoji lilex
+    nerd-fonts.jetbrains-mono
 
     # ── 隐式包：workstation/laptop.nix ──────────────────
     # services.power-profiles-daemon.enable, services.blueman.enable
@@ -89,6 +100,7 @@
 
     # ── 隐式包：workstation/hyprland.nix（条件启用） ─────
     waybar wofi mako grim slurp swappy hyprpaper cliphist wlogout swaylock-effects playerctl networkmanagerapplet pavucontrol xdg-desktop-portal-gtk
+    (python3.withPackages (ps: [ ps.pyyaml ]))
 
     # ── disko 离线支持 ───────────────────────────────
     inputs.disko.packages.${pkgs.system}.disko
