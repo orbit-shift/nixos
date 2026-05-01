@@ -8,11 +8,12 @@
 
 ```
 nixos/
-├── flake.nix                     # Flake 入口，定义主机 + ISO 构建
+├── flake.nix                     # Flake 入口，定义主机 + 便携系统构建
 ├── hosts/
 │   ├── workstation/              # COSMIC 桌面工作站
-│   ├── server/                   # 无头服务器 (默认 Nomad)
+│   ├── server/                   # 无头服务器 (K8s 节点)
 │   ├── vbox/                     # VirtualBox 虚拟机
+│   ├── portable/                 # USB 便携系统盘（通用安装/救援环境）
 │   ├── k8s-role.nix              # K8s 角色模板（数据驱动）
 ├── config/
 │   └── nodes.nix               # K8s 集群节点定义

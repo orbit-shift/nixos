@@ -26,11 +26,13 @@
 
 **方式 A-2：使用自定义 ISO（推荐）**
 ```bash
-# 在项目根目录构建自定义 ISO
-nix build .#iso
+# 使用 portable 系统盘作为安装介质
+# 构建便携系统配置（包含完整工具链）
+nix build .#portable
 
-# 将 ISO 复制到 Ventoy U 盘即可
-cp result/iso/my-nixos-live.iso /mnt/ventoy/
+# 将系统安装到 USB 硬盘
+# 注：需使用 disko 配置或手动分区后执行 nixos-install
+nixos-install --flake .#portable --root /mnt
 ```
 
 > **Ventoy 使用方式：** 只需将 Ventoy 安装到 U 盘一次，之后直接将 ISO 文件拷贝到 U 盘中即可启动，无需重复写入。

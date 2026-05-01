@@ -32,8 +32,9 @@
 
     # ── workstation/apps-core.nix ────────────────────────
     ghostty alacritty neovim neovide zed-editor
-    vivaldi qutebrowser
+    qutebrowser
     freefilesync smplayer krita blender flameshot
+    # vivaldi
     # calibre
 
     # ── workstation/apps-im.nix ──────────────────────────

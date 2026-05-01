@@ -13,11 +13,13 @@
 
 **方式 B：使用自定义 ISO（推荐）**
 ```bash
-# 在项目根目录构建自定义 ISO
-nix build .#iso
+# 使用 portable 系统盘作为安装介质
+# 1. 构建便携系统配置（包含完整工具链）
+nix build .#portable
 
-# 将 ISO 复制到 Ventoy U 盘即可
-cp result/iso/my-nixos-live.iso /mnt/ventoy/
+# 2. 将系统安装到 USB 硬盘（假设设备为 /dev/sdX）
+#    注：需使用 disko 配置或手动分区后执行 nixos-install
+nixos-install --flake .#portable --root /mnt
 ```
 
 > **Ventoy 使用方式：** 只需将 Ventoy 安装到 U 盘一次，之后直接将 ISO 文件拷贝到 U 盘中即可启动，无需重复写入。
@@ -136,7 +138,7 @@ kubeadm join <control-plane-ip>:6443 --token <token> --discovery-token-ca-cert-h
 
 1. **修改 IP/角色**：编辑 `config/nodes.nix`，修改 IP 或调整角色（control/worker/combo）
 2. **修改磁盘**：取消注释模板中的 `hardware-configuration.nix` 和 `disk.nix`（安装后生成）
-3. **服务器默认**：`server` 主机默认使用 Nomad，K8s 使用独立节点配置
+3. **服务器定位**：`server` 主机现作为 K8s 节点使用（支持 control/worker/combo 角色），Nomad 模块已废弃并移除
 
 ---
 
