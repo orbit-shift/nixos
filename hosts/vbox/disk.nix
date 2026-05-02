@@ -17,6 +17,7 @@
           };
           root = {
             size = "100%";
+            label = "disk-main-root";
             content = {
               type = "filesystem";
               format = "xfs";
