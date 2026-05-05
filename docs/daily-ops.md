@@ -28,17 +28,7 @@ nix flake update
 # 2. 验证配置能否成功构建（不实际切换，会下载必要依赖）
 sudo nixos-rebuild dry-build --flake .#workstation
 
-# 3. 确认无误后切换
-sudo nixos-rebuild switch --flake .#workstation
-```
-
-### 快速更新（跳过验证）
-
-```bash
-# 更新 flake 输入（拉取最新 nixpkgs）
-nix flake update
-
-# 重建并切换（不重启）
+# 3. 确认无误后重建并切换（不重启）
 sudo nixos-rebuild switch --flake .#workstation
 
 # 重建并重启（内核更新时必须）
