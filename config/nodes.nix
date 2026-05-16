@@ -24,11 +24,15 @@
     ];
 
     # ── 数据盘挂载 ──────────────────────────────────────
-    # 挂载点自动跟随 flake.nix 中的 user 变量
     fileSystems."${dataDir}" = {
       device = "/dev/disk/by-uuid/79967e21-e2d6-4fc4-a8a4-e45dedf211ef";
       fsType = "btrfs";
       options = [ "subvol=@" "compress=zstd" ];
     };
+
+    # ── 额外 SSH 公钥 ────────────────────────────────────
+    users.users.master.openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAzNo0nUZQcEZBIubufcp0cC2x56Giul8iif1iWDRySb master@dx"
+    ];
   };
 }

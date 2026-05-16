@@ -1,4 +1,8 @@
 { pkgs, lib, ... }: {
+  imports = [
+    ../../config/registries.nix  # 容器镜像仓库配置
+  ];
+
   # ── Podman ───────────────────────────────────────────────
   virtualisation.podman = {
     enable = true;
@@ -12,38 +16,13 @@
     settings = {
       plugins."io.containerd.grpc.v1.cri" = {
         sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.9";
+        registry.mirrors = {
+          "registry.k8s.io" = { endpoint = ["https://registry.aliyuncs.com/google_containers"]; };
+          "docker.io" = { endpoint = ["https://docker.lizzie.fun"]; };
+        };
       };
     };
   };
-
-  # ── Container Registries ─────────────────────────────────
-  environment.etc."containers/registries.conf".text = lib.mkForce ''
-    unqualified-search-registries = ["docker.io"]
-
-    [[registry]]
-    insecure = true
-    location = "registry.s"
-
-    [[registry]]
-    insecure = true
-    location = "registry.d"
-
-    [[registry]]
-    insecure = true
-    location = "172.178.5.123:5000"
-
-    [[registry]]
-    insecure = true
-    location = "localhost:5000"
-
-    [[registry]]
-    prefix = "docker.io"
-    location = "docker.lizzie.fun"
-
-    [[registry]]
-    prefix = "ghcr.io"
-    location = "ghcr.lizzie.fun"
-  '';
 
 
   # Podman storage 配置（路径放在 /root 下）
