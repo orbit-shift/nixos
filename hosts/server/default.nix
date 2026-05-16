@@ -15,6 +15,4 @@
     ../../modules/common/extra.nix
     ../../modules/common/vm.nix
   ];
-
-  networking.hostName = "server";
 }

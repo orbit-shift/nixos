@@ -1,4 +1,4 @@
-{ inputs, hostname, ip, dataDir, ... }: {
+{ inputs, dataDir, ... }: {
   imports = [
     inputs.disko-stable.nixosModules.disko
 
@@ -16,12 +16,4 @@
     # 磁盘配置（按需修改）
     # ./disk-${hostname}.nix
   ];
-
-  networking.hostName = hostname;
-
-  # ── 网络配置 ──────────────────────────────────────────
-  networking.interfaces.eth0.ipv4.addresses = [{
-    address = ip;
-    prefixLength = 24;
-  }];
 }

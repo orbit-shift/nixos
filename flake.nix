@@ -48,12 +48,22 @@
 
     # K8s 节点生成函数
     mkK8sNode = name: attrs: nixpkgs-stable.lib.nixosSystem {
-      specialArgs = { inherit inputs dataDir; hostname = name; ip = attrs.ip; };
+      specialArgs = { inherit inputs dataDir; };
       modules = [
         { nixpkgs.hostPlatform = "x86_64-linux"; }
         ./hosts/k8s-role.nix
         k8sRoleModules.${attrs.role}
-      ];
+        # 注入节点特定的 Hostname 和 IP 配置
+        {
+          networking.hostName = attrs.hostname or name;
+        }
+        (if attrs ? ip then {
+          networking.interfaces.eth0.ipv4.addresses = [{
+            address = attrs.ip;
+            prefixLength = 24;
+          }];
+        } else {})
+      ] ++ attrs.imports;
     };
   in {
     nixosConfigurations = (nixpkgs.lib.mapAttrs mkK8sNode k8sNodes) // {
@@ -80,6 +90,7 @@
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/server
+          { networking.hostName = "server"; } # 独立 Server 主机默认名称
           home-manager-stable.nixosModules.home-manager
           {
             home-manager = {
@@ -97,6 +108,7 @@
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/qemu
+          { networking.hostName = "qemu"; } # 独立 QEMU 主机默认名称
           home-manager.nixosModules.home-manager
           {
             home-manager = {
