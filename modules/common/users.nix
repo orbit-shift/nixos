@@ -1,7 +1,7 @@
 { pkgs, ... }: {
   users.users.master = {
     isNormalUser = true;
-    shell = pkgs.nushell;
+    shell = pkgs.bash;
     # 密码 mkpasswd -m yescrypt my-password
     hashedPassword = "$y$j9T$N8zsqdX1UXaCreKNDa1Le0$xzuUsYXUlkIheSCKdEn8ysxOkhO0r2bI6JMBhh/5n92";
     extraGroups = [

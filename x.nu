@@ -31,6 +31,6 @@ export module portable {
         host: string = 'portable'
         config: path = $ROOT
     ] {
-        sudo nixos-rebuild switch --root /mnt --flake $"($config)#($host)"
+        sudo nixos-install --root /mnt --no-root-password --flake $"($config)#($host)"
     }
 }

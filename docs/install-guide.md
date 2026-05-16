@@ -503,6 +503,22 @@ nixos-install --flake ~/nixos-config#workstation --root /mnt --no-write-lock-fil
 
 > **注意**：宿主机（如 Arch Linux）的 nix 配置通常没问题，所以在本机执行 `nix flake update` 不会报错。问题只出现在 portable 系统内部。
 
+### 2.5 更新已安装的系统（外部挂载场景）
+
+当你已经在目标磁盘安装好了系统，但在 Live CD 或另一台机器（如 portable）上挂载该磁盘到 `/mnt` 进行配置更新时，请使用 `nixos-install` 而不是 `nixos-rebuild`。
+
+> **注意**：新版 `nixos-rebuild` 已移除 `--root` 参数，它仅用于更新当前正在运行的系统。
+
+#### 命令
+
+```bash
+# 正确：使用 nixos-install 更新外部磁盘
+sudo nixos-install --root /mnt --no-root-password --flake .#server
+```
+
+- `--no-root-password`：**重要**。避免重置已有系统的 root 密码和用户账户状态。
+- 如果不加此参数，脚本会交互式要求你重新设置 root 密码，可能会覆盖现有配置。
+
 ---
 
 ## 📚 官方文档与参考资料

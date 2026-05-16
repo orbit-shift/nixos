@@ -84,7 +84,7 @@ portable switch -c /path/to/config -h portable
 portable enter
 ```
 
-`switch` 在宿主机上直接调用 `nixos-rebuild --root /mnt`，无需 chroot 即可更新。`enter` 保留用于手动排查场景。
+`switch` 在宿主机上直接调用 `nixos-install --root /mnt --no-root-password`，无需 chroot 即可更新。`enter` 保留用于手动排查场景。
 
 **常见问题**：
 - `nix flake update` 报 public key 错误 → [查看故障排除](docs/install-guide.md#q-nix-flake-update-或-nixos-rebuild-报-public-key-错误)

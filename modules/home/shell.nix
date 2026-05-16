@@ -10,6 +10,18 @@ in
     "Use symlink + git clone for nushell config (for development)";
 
   config = lib.mkMerge [
+    # Enable bash and auto-launch nushell (safe fallback)
+    {
+      programs.bash.enable = true;
+      programs.bash.bashrcExtra = ''
+        # Auto-launch nushell for interactive shells
+        # Without 'exec' so that if nu crashes, we fallback to bash
+        if [[ $- == *i* && -z "$NU_SHELL" ]] && command -v nu >/dev/null 2>&1; then
+          export NU_SHELL=1
+          nu --login
+        fi
+      '';
+    }
     # 始终启用 nushell + 插件 (polars / query web)
     # 注：插件放入 home.packages 而非 programs.nushell.plugins，避免与整目录 symlink 冲突
     # {
