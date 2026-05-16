@@ -2,7 +2,7 @@
   virtualisation.oci-containers.containers = {
     mihomo = {
       image = "ghcr.io/fj0r/xy:mihomo";
-      volumes = [ "${dataDir}/mihomo:/data" ];
+      volumes = [ "${dataDir}/ladder/mihomo:/data" ];
       ports = [
         "7890:7890"
         "7891:7891"

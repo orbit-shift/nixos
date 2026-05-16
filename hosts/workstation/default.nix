@@ -22,6 +22,7 @@
     ../../modules/common/vm.nix              # libvirtd/virt-manager 虚拟机支持
 
     ../../modules/dev
+    ../../modules/podman/mihomo.nix        # 代理容器
   ];
 
   # 启用 Hyprland 并禁用 COSMIC Greeter 以使用 SDDM

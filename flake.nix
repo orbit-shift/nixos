@@ -1,8 +1,6 @@
 {
   description = "My NixOS configuration";
 
-  # 统一数据目录前缀（podman/quadlet 服务、rime 词库等）
-  # 按需修改为实际路径，如 "/home/master/data"
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";       # 工作站 / qemu / ISO
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";   # 服务器
@@ -34,7 +32,9 @@
   outputs = { self, nixpkgs, nixpkgs-stable, disko, disko-stable, home-manager, home-manager-stable, my-nushell-src, ... }@inputs:
   let
     # ── 数据目录前缀 ─────────────────────────────────────
-    dataDir = "/data";
+    # 统一数据目录前缀（podman/quadlet 服务、rime 词库等）
+    # 按需修改为实际路径，如 "/home/master/data"
+    dataDir = "/home/master/data";
 
     # ── K8s 节点定义（从外部配置文件读取） ─────────────────────
     k8sNodes = import ./config/nodes.nix;

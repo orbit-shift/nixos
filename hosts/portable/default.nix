@@ -24,6 +24,7 @@
     ../../modules/dev
     # 注意：不包含 laptop.nix，避免在非笔记本硬件上报错
     ../../modules/common/vm.nix
+    ../../modules/podman/mihomo.nix        # 代理容器
   ];
 
   # ── 通用硬件支持 ──────────────────────────────────
