@@ -20,11 +20,11 @@
     # ../../modules/dev
   ];
 
-  # VirtualBox 客户机增强功能 (共享剪贴板、自动分辨率等)
-  virtualisation.virtualbox.guest.enable = true;
+  # QEMU/KVM guest: SPICE agent for clipboard sharing and auto-resolution
+  services.spice-vdagentd.enable = true;
 
-  # 使用稳定内核，避免 linuxPackages_latest 与 VBox GuestAdditions 不兼容
+  # Use stable kernel for maximum guest compatibility
   boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
 
-  networking.hostName = "vbox";
+  networking.hostName = "qemu";
 }

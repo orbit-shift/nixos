@@ -4,7 +4,7 @@
   # 统一数据目录前缀（podman/quadlet 服务、rime 词库等）
   # 按需修改为实际路径，如 "/home/master/data"
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";       # 工作站 / vbox / ISO
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";       # 工作站 / qemu / ISO
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";   # 服务器
 
     disko = {
@@ -92,11 +92,11 @@
         ];
       };
 
-      vbox = nixpkgs.lib.nixosSystem {
+      qemu = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs dataDir; };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
-          ./hosts/vbox
+          ./hosts/qemu
           home-manager.nixosModules.home-manager
           {
             home-manager = {

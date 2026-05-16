@@ -1,6 +1,6 @@
 # NixOS 26 Flake Configuration
 
-> 基于 NixOS unstable 的模块化 Flakes 配置，支持 **工作站 (workstation)**、**服务器 (server)**、**虚拟机 (vbox)** 与 **K8s 集群 (k8s-control / k8s-worker)**。
+> 基于 NixOS unstable 的模块化 Flakes 配置，支持 **工作站 (workstation)**、**服务器 (server)**、**虚拟机 (qemu)** 与 **K8s 集群 (k8s-control / k8s-worker)**。
 
 ---
 
@@ -12,7 +12,7 @@ nixos/
 ├── hosts/
 │   ├── workstation/              # COSMIC 桌面工作站
 │   ├── server/                   # 无头服务器 (K8s 节点)
-│   ├── vbox/                     # VirtualBox 虚拟机
+│   ├── qemu/                     # QEMU/KVM 虚拟机
 │   ├── portable/                 # USB 便携系统盘（通用安装/救援环境）
 │   ├── k8s-role.nix              # K8s 角色模板（数据驱动）
 ├── config/
@@ -32,7 +32,7 @@ nixos/
 |------|----------|---------------|
 | **服务器 (server)** | [docs/server.md](docs/server.md) | [docs/upgrade-guide.md](docs/upgrade-guide.md) |
 | **工作站 (workstation)** | [docs/workstation.md](docs/workstation.md) | [docs/upgrade-guide.md](docs/upgrade-guide.md) |
-| **虚拟机 (vbox)** | [docs/server.md](docs/server.md)（参考服务器流程） | — |
+| **虚拟机 (qemu)** | [docs/server.md](docs/server.md)（参考服务器流程） | — |
 | **便携系统 (portable)** | [x.nu](x.nu) `portable install` | 本 README → 💾 便携式系统 |
 | **K8s 集群** | [docs/server.md](docs/server.md) → K8s 章节 | — |
 

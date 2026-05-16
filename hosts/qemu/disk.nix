@@ -1,7 +1,7 @@
 { ... }: {
   disko.devices = {
     disk.main = {
-      device = "/dev/sda";   # VirtualBox 默认 SATA 磁盘
+      device = "/dev/sda";   # QEMU default disk (SATA or virtio)
       type = "disk";
       content = {
         type = "gpt";
