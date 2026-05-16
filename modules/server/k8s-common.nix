@@ -34,7 +34,7 @@ in {
   ];
 
   # 监听所有网络接口，允许远程访问
-  services.kubernetes.apiserver.address = "0.0.0.0";
+  services.kubernetes.apiserver.bindAddress = "0.0.0.0";
 
   # NodePort 范围扩展
   services.kubernetes.apiserver.extraOpts = "--service-node-port-range=1-32767";
@@ -69,7 +69,29 @@ in {
   environment.systemPackages = with pkgs; [
     kubectl
     kubernetes-helm
+    istioctl
   ];
+
+  # ── CNI：Flannel（通过 DaemonSet 部署） ──────────────────
+  # Flannel DaemonSet 会自动管理 /etc/cni/net.d/ 下的配置文件
+  services.kubernetes.kubelet.cni.packages = with pkgs; [ cni-plugins ];
+
+  # Flannel DaemonSet 部署（仅控制节点执行一次）
+  systemd.services.deploy-flannel = {
+    description = "Deploy Flannel CNI to Kubernetes cluster";
+    after = [ "kubelet.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      # 检查 flannel 是否已部署
+      if ! ${pkgs.kubectl}/bin/kubectl get namespace kube-flannel &>/dev/null; then
+        echo "Deploying Flannel CNI..."
+        ${pkgs.kubectl}/bin/kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      else
+        echo "Flannel already deployed"
+      fi
+    '';
+  };
 
   # ── 防火墙：通用端口 ───────────────────────────────────
   networking.firewall.allowedTCPPorts = [
