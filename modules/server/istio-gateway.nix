@@ -3,7 +3,7 @@
   kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig ${kubeconfig}";
   istioctl = "${pkgs.istioctl}/bin/istioctl --kubeconfig ${kubeconfig}";
 
-  # IstioOperator 配置：包含所有 gateway 设置
+  # IstioOperator 配置：包含所有 gateway 设置（含 TCP 端口）
   istioOperator = pkgs.writeText "istio-operator.yaml" ''
     apiVersion: install.istio.io/v1alpha1
     kind: IstioOperator
@@ -23,7 +23,6 @@
                   - name: status-port
                     port: 15021
                     targetPort: 15021
-                    # 不设 nodePort，仅供集群内部健康检查
                   - name: http2
                     port: 80
                     targetPort: 8080
@@ -32,6 +31,15 @@
                     port: 443
                     targetPort: 8443
                     nodePort: 443
+                  - name: tcp-ssh
+                    port: 22
+                    targetPort: 22
+                    nodePort: 22
+                  - name: udp-dns
+                    port: 53
+                    protocol: UDP
+                    targetPort: 53
+                    nodePort: 10053
         egressGateways:
           - name: istio-egressgateway
             enabled: true
@@ -45,6 +53,9 @@
               limits:
                 cpu: 500m
                 memory: 256Mi
+        gateways:
+          istio-ingressgateway:
+            runAsRoot: true
   '';
 
   # 强制清理 Istio 资源（处理 finalizers 卡住问题）
@@ -64,7 +75,7 @@
 
     # 2. 删除所有 Istio 相关 CRD 资源的 finalizers
     echo "[cleanup-istio] Removing Istio CR finalizers..."
-    for crd in envoyfilter gateway httproute referencegrant tcproute tlsservice virtualservice wasmplugin; do
+    for crd in envoyfilter gateway grpcroute httproute referencegrant tcproute tlsservice udproute virtualservice wasmplugin; do
       for ns in $($KUBECTL get ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null); do
         for item in $($KUBECTL get $crd -n $ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true); do
           $KUBECTL patch $crd $item -n $ns --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
@@ -100,13 +111,13 @@
     exit 1
   '';
 
-  # Gateway API CRD 文件
+  # Gateway API CRD 文件（experimental 通道，包含 TCPRoute/UDPRoute/GRPCRoute）
   gatewayApiCrdFile = pkgs.fetchurl {
-    url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml";
-    hash = "sha256-c7kbd/a+AjqMkslp/GZOW9OxoorqWerJ68kEYHNU2tI=";
+    url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml";
+    hash = "sha256-VTMn4P8yoaK+RGv5OCPIQTz5JTrGptVAfuvR6NJp9p4=";
   };
 
-  # Gateway 资源清单 (web + ssh)
+  # Gateway 资源清单 (web + ssh/tcp + udp)
   gatewayManifest = pkgs.writeText "gateways.yaml" ''
     apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
@@ -147,7 +158,7 @@
     apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
-      name: ssh
+      name: tcp
       namespace: istio-system
     spec:
       addresses:
@@ -155,7 +166,7 @@
         type: Hostname
       gatewayClassName: istio
       listeners:
-      - name: ssh
+      - name: tcp-ssh
         port: 22
         protocol: TCP
         allowedRoutes:
@@ -164,7 +175,29 @@
             selector:
               matchLabels:
                 shared-gateway-access: "true"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: Gateway
+    metadata:
+      name: udp
+      namespace: istio-system
+    spec:
+      addresses:
+      - value: istio-ingressgateway.istio-system.svc.cluster.local
+        type: Hostname
+      gatewayClassName: istio
+      listeners:
+      - name: udp-dns
+        port: 53
+        protocol: UDP
+        allowedRoutes:
+          namespaces:
+            from: Selector
+            selector:
+              matchLabels:
+                shared-gateway-access: "true"
   '';
+
 in {
   config = {
     # ── Istio Gateway + Gateway API CRDs ─────────────────────
@@ -211,9 +244,9 @@ in {
       };
     };
 
-    # ── Gateway API CRDs ──────────────────────────────────────
+    # ── Gateway API CRDs (experimental) ──────────────────────
     systemd.services.deploy-gateway-api-crds = {
-      description = "Deploy Gateway API Standard CRDs";
+      description = "Deploy Gateway API Experimental CRDs (includes TCPRoute/UDPRoute)";
       after = [ "deploy-istio.service" ];
       wantedBy = lib.mkForce [];
       serviceConfig = {
@@ -221,7 +254,7 @@ in {
         TimeoutStartSec = "2min";
       };
       script = ''
-        echo "Deploying Gateway API CRDs..."
+        echo "Deploying Gateway API Experimental CRDs..."
         ${kubectl} apply -f ${gatewayApiCrdFile}
       '';
     };
@@ -263,9 +296,9 @@ in {
       '';
     };
 
-    # ── Gateway 资源 (web + ssh) ──────────────────────────────
+    # ── Gateway 资源 (web + tcp + udp) ──────────────────────────────
     systemd.services.deploy-gateways = {
-      description = "Deploy Gateway resources (web and ssh)";
+      description = "Deploy Gateway resources (web, tcp, udp)";
       after = [ "deploy-gateway-api-crds.service" ];
       wantedBy = lib.mkForce [];
       serviceConfig = {

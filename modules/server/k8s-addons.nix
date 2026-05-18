@@ -22,16 +22,16 @@ let
   patchCoreDNSScript = pkgs.writeShellScript "patch-coredns.sh" ''
     # 等待 cni0 接口出现（Flannel Pod 启动后创建）
     echo "[coredns-patch] Waiting for cni0 interface..."
-    for i in $(seq 1 30); do
+    for i in $(seq 1 60); do
       if ip link show cni0 >/dev/null 2>&1; then
         echo "[coredns-patch] cni0 interface detected"
         break
       fi
-      if [ $i -eq 30 ]; then
-        echo "[coredns-patch] ERROR: cni0 interface not found after 60s"
+      if [ $i -eq 60 ]; then
+        echo "[coredns-patch] ERROR: cni0 interface not found after 120s"
         exit 1
       fi
-      echo "[coredns-patch] Attempt $i/30, waiting for Flannel to create cni0..."
+      echo "[coredns-patch] Attempt $i/60, waiting for Flannel to create cni0..."
       sleep 2
     done
 
@@ -118,13 +118,19 @@ let
       exit 1
     fi
 
-    # 4.5. 等待 Flannel Pod 就绪（确保 cni0 网桥已创建）
+    # 4.5. 等待 Flannel Pod 就绪
     echo "[k8s-addons] Waiting for Flannel DaemonSet to be ready..."
     if ! $KUBECTL rollout status daemonset kube-flannel-ds -n kube-flannel --timeout=120s; then
       echo "[k8s-addons] WARN: Flannel DaemonSet not ready within 120s, will retry on next activation"
       exit 1
     fi
     echo "[k8s-addons] Flannel DaemonSet is ready"
+
+    # 4.6. 触发 cni0 创建：删除现有 CoreDNS Pod，让 kubelet 用 Flannel CNI 重新调度
+    echo "[k8s-addons] Triggering cni0 creation by restarting CoreDNS..."
+    $KUBECTL delete pod -n kube-system -l k8s-app=kube-dns --wait 2>/dev/null || true
+    # 等待 kubelet 调度新 Pod 并创建 cni0（需要较长时间）
+    sleep 15
 
     # 5. Patch CoreDNS env（使用 kubectl patch 而非 apply）
     echo "[k8s-addons] Patching CoreDNS with API server address..."
@@ -133,9 +139,8 @@ let
       exit 1
     fi
 
-    # 6. 重启受影响的 Pod 使其读取新配置
-    echo "[k8s-addons] Restarting affected pods..."
-    $KUBECTL delete pod -n kube-flannel -l app=flannel --ignore-not-found=true --wait 2>/dev/null || true
+    # 6. 再次重启 CoreDNS 使其使用新的 KUBERNETES_SERVICE_HOST 配置
+    echo "[k8s-addons] Restarting CoreDNS to apply env patch..."
     $KUBECTL rollout restart deployment coredns -n kube-system --wait 2>/dev/null || true
 
     echo "[k8s-addons] Addon deployment complete."
@@ -198,7 +203,6 @@ in {
       after = [ "kubelet.service" "kube-apiserver.service" ];
       serviceConfig = {
         Type = "oneshot";
-        RemainAfterExit = true;
         ExecStart = deployScript;
         TimeoutStartSec = "10min";
       };

@@ -1,5 +1,5 @@
 # Kubernetes 通用配置（CRI-O / Containerd 公共部分）
-{ pkgs, lib, config, ... }: {
+{ pkgs, lib, config, cni0IP, ... }: {
   # ── 声明容器运行时选项（必须由 k8s-lib.nix 显式设置） ──
   options.services.kubernetes.runtime = lib.mkOption {
     type = lib.types.enum [ "crio" "containerd" ];
@@ -19,19 +19,19 @@
   config = let
     runtime = config.services.kubernetes.runtime;
 
-  # 根据运行时选择 socket 路径
-  criSocket = {
-    crio = "/run/crio/crio.sock";
-    containerd = "/run/containerd/containerd.sock";
-  }.${runtime};
+    # 根据运行时选择 socket 路径
+    criSocket = {
+      crio = "/run/crio/crio.sock";
+      containerd = "/run/containerd/containerd.sock";
+    }.${runtime};
 
-  # ── Kubelet 基础参数（可被子模块通过 config 模块扩展） ──
-  baseKubeletOpts = [
-    "--container-runtime-endpoint=unix://${criSocket}"
-    "--runtime-request-timeout=10m"
-    "--max-pods=500"
-  ];
-in {
+    # ── Kubelet 基础参数（可被子模块通过 config 模块扩展） ──
+    baseKubeletOpts = [
+      "--container-runtime-endpoint=unix://${criSocket}"
+      "--runtime-request-timeout=10m"
+      "--max-pods=500"
+    ];
+  in {
   # ── 自动证书管理 + Flannel + Proxy ─────────────────────
   # roles 非空时会自动启用 easyCerts、flannel、proxy
   # 此处显式启用以确保
@@ -111,14 +111,22 @@ in {
     "kubernetes.default"
     "kubernetes.default.svc"
     "kubernetes.default.svc.cluster.local"
-    "10.1.1.1"  # cni0 桥接 IP（单节点集群中 Pod 访问 API Server 的地址）
+    (cni0IP config.services.kubernetes.podCIDR)
   ];
 
   # 监听所有网络接口，允许远程访问
   services.kubernetes.apiserver.bindAddress = "0.0.0.0";
 
-  # NodePort 范围扩展
-  services.kubernetes.apiserver.extraOpts = "--service-node-port-range=1-32767";
+  # NodePort 范围扩展 + Aggregated API 认证
+  # 使用 NixOS 自动生成的 CA 作为 requestheader CA（与 proxy-client 证书匹配）
+  services.kubernetes.apiserver.extraOpts = lib.concatStringsSep " " [
+    "--service-node-port-range=1-32767"
+    "--requestheader-client-ca-file=/var/lib/kubernetes/secrets/ca.pem"
+    "--requestheader-allowed-names=front-proxy-client"
+    "--requestheader-extra-headers-prefix=X-Remote-Extra-"
+    "--requestheader-group-headers=X-Remote-Group"
+    "--requestheader-username-headers=X-Remote-User"
+  ];
 
   # ── k8s 所需内核模块 ────────────────────────────────────
   boot.kernelModules = [ "overlay" "br_netfilter" ];

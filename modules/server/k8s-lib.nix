@@ -21,6 +21,24 @@ let
     ];
   };
 
+  # ── 计算 cni0 桥接 IP ─────────────────────────────
+  # Flannel 默认 SubnetLen=24，保留第一个 /24，第一个节点用第二个 /24
+  # 算法：network_base + 257（跳过第一个 /24 的 256 地址 + 第一个可用 IP）
+  # 10.1.0.0/16 → 10.1.1.1 | 10.0.0.0/12 → 10.0.1.1 | 192.168.0.0/16 → 192.168.1.1
+  cni0IP = cidr: let
+    cidrBase = lib.head (lib.splitString "/" cidr);
+    octets = lib.map (lib.toInt) (lib.splitString "." cidrBase);
+    ipInt = (lib.elemAt octets 0) * 16777216
+          + (lib.elemAt octets 1) * 65536
+          + (lib.elemAt octets 2) * 256
+          + (lib.elemAt octets 3)
+          + 257;
+    o1 = builtins.floor (ipInt / 16777216);
+    o2 = builtins.floor ((ipInt - o1 * 16777216) / 65536);
+    o3 = builtins.floor ((ipInt - o1 * 16777216 - o2 * 65536) / 256);
+    o4 = ipInt - o1 * 16777216 - o2 * 65536 - o3 * 256;
+  in "${toString o1}.${toString o2}.${toString o3}.${toString o4}";
+
   # 容器运行时 socket 路径映射
   runtimeSocketPaths = {
     crio = "/run/crio/crio.sock";
@@ -32,9 +50,8 @@ let
     crio = ./crio.nix;
     containerd = ./containerd.nix;
   };
-in
-{
-  # 展平 clusters 结构，自动注入 runtime 和 masterIP
+
+  # ── 展平 clusters 结构，自动注入 runtime 和 masterIP ──
   # 输入：{ clusterName = { runtime; nodes; }; }
   # 输出：{ "cluster__node" = { runtime; masterIP?; ... }; }
   flattenClusters = clusters:
@@ -60,7 +77,7 @@ in
       ) {} (builtins.attrNames cluster.nodes))
     ) {} (builtins.attrNames clusters);
 
-  # K8s 节点生成函数
+  # ── K8s 节点生成函数 ─────────────────────────────────
   mkK8sNode = name: attrs: let
     # 提取已处理的属性，其余作为 NixOS 模块注入
     nodeModule = lib.removeAttrs attrs [ "hostname" "ip" "role" "runtime" "imports" "masterIP" "isFirstControl" "adminEmail" "podCIDR" ];
@@ -79,7 +96,7 @@ in
       services.kubernetes.apiserver.extraSANs = [ attrs.ip ];
     };
   in lib.nixosSystem {
-    specialArgs = { inherit inputs dataDir; };
+    specialArgs = { inherit inputs dataDir cni0IP; };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
       ../../hosts/k8s-role.nix
@@ -110,4 +127,8 @@ in
       nodeModule
     ] ++ attrs.imports;
   };
-}
+
+  # ── 导出库 ───────────────────────────────────────────
+  k8sLib = { inherit cni0IP flattenClusters mkK8sNode; };
+in
+k8sLib
