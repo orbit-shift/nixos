@@ -1,24 +1,5 @@
 { pkgs, lib, config, ... }: let
-  kubeconfig = pkgs.writeText "kubeconfig" ''
-    apiVersion: v1
-    clusters:
-    - cluster:
-        certificate-authority: /var/lib/kubernetes/secrets/ca.pem
-        server: https://127.0.0.1:6443
-      name: default
-    contexts:
-    - context:
-        cluster: default
-        user: admin
-      name: default
-    current-context: default
-    kind: Config
-    users:
-    - name: admin
-      user:
-        client-certificate: /var/lib/kubernetes/secrets/cluster-admin.pem
-        client-key: /var/lib/kubernetes/secrets/cluster-admin-key.pem
-  '';
+  kubeconfig = "/etc/kubernetes/cluster-admin.kubeconfig";
   kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig ${kubeconfig}";
   istioctl = "${pkgs.istioctl}/bin/istioctl --kubeconfig ${kubeconfig}";
 in {
@@ -89,10 +70,13 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
       script = let
-        gatewayApiVersion = "v1.4.1";
+        gatewayApiCrdFile = pkgs.fetchurl {
+          url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml";
+          hash = "sha256-c7kbd/a+AjqMkslp/GZOW9OxoorqWerJ68kEYHNU2tI=";
+        };
       in ''
         echo "Deploying Gateway API CRDs..."
-        ${kubectl} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${gatewayApiVersion}/standard-install.yaml
+        ${kubectl} apply -f ${gatewayApiCrdFile}
       '';
     };
 

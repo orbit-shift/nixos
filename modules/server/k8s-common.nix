@@ -27,6 +27,76 @@
     "--max-pods=500"
   ];
 in {
+  # ── 自动证书管理 + Flannel + Proxy ─────────────────────
+  # roles 非空时会自动启用 easyCerts、flannel、proxy
+  # 此处显式启用以确保
+  services.kubernetes.easyCerts = true;
+
+  # ── K8s 证书自动续期 ──────────────────────────────────
+  # 每周检测证书有效期，到期前 30 天自动 rebuild
+  # 注意：服务器上必须有 flake 配置才能自动续期
+  systemd.services.renew-k8s-certs = {
+    description = "Auto-renew Kubernetes certificates before expiration";
+    serviceConfig.Type = "oneshot";
+    script = ''
+      SECRETS_DIR="/var/lib/kubernetes/secrets"
+      THRESHOLD_DAYS=30
+      CONFIG_DIR="/home/master/nixos"
+      HOSTNAME=$(cat /etc/hostname)
+
+      # 检查是否存在证书目录
+      [ -d "$SECRETS_DIR" ] || exit 0
+
+      # 查找所有 .pem 证书并检查过期时间
+      EXPIRING=false
+      for cert in $SECRETS_DIR/*.pem; do
+        [ -f "$cert" ] || continue
+        enddate=$(openssl x509 -enddate -noout -in "$cert" 2>/dev/null | cut -d= -f2)
+        [ -z "$enddate" ] && continue
+        end_epoch=$(date -d "$enddate" +%s 2>/dev/null) || continue
+        now_epoch=$(date +%s)
+        days_left=$(( (end_epoch - now_epoch) / 86400 ))
+        if [ $days_left -lt $THRESHOLD_DAYS ] && [ $days_left -ge 0 ]; then
+          echo "Certificate $(basename $cert) expires in $days_left days ($enddate)"
+          EXPIRING=true
+        fi
+      done
+
+      # 有证书即将过期，执行 rebuild
+      if [ "$EXPIRING" = true ]; then
+        echo "Certificates expiring soon, running nixos-rebuild..."
+        if [ -d "$CONFIG_DIR" ]; then
+          nix --extra-experimental-features 'nix-command flakes' build \
+            "$CONFIG_DIR#nixosConfigurations.dev__dxserver.config.system.build.toplevel" \
+            --no-link
+          /run/current-system/bin/switch-to-configuration switch
+          # TODO: 邮件通知（需要配置 SMTP）
+          # 示例：curl --silent --url 'smtps://smtp.example.com:465' \
+          #   --mail-from 'alert@example.com' --mail-rcpt 'admin@example.com' \
+          #   --user 'alert@example.com:password' \
+          #   -T <(echo -e "Subject: K8s Certs Renewed\n\nCertificates renewed on $(hostname)")
+          logger -t k8s-certs "Certificates renewed and applied successfully"
+        else
+          echo "ERROR: NixOS config not found at $CONFIG_DIR. Manual rebuild required."
+          # TODO: 邮件通知失败时发送告警
+          logger -t k8s-certs "ERROR: Auto-renew failed - config not found at $CONFIG_DIR"
+        fi
+      else
+        echo "All certificates are valid for more than $THRESHOLD_DAYS days"
+      fi
+    '';
+  };
+
+  systemd.timers.renew-k8s-certs = {
+    description = "Timer for K8s certificate auto-renewal";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "weekly";
+      RandomizedDelaySec = "6h";
+      Persistent = true;
+    };
+  };
+
   # ── API Server SANs（通用地址） ────────────────────────
   # 节点特有 IP/域名由 nodes.nix 注入
   services.kubernetes.apiserver.extraSANs = [
@@ -68,6 +138,10 @@ in {
   services.kubernetes.kubelet = {
     enable = true;
     extraOpts = lib.concatStringsSep " " baseKubeletOpts;
+    # Pod DNS 配置：指向 kube-dns ClusterIP
+    clusterDns = [ "10.0.0.254" ];
+    # 集群内部域名后缀
+    clusterDomain = "cluster.local";
   };
 
   # ── CLI 工具 ───────────────────────────────────────────
@@ -77,28 +151,9 @@ in {
     istioctl
   ];
 
-  # ── CNI：Flannel（通过 DaemonSet 部署） ──────────────────
-  # Flannel DaemonSet 会自动管理 /etc/cni/net.d/ 下的配置文件
+  # ── Flannel CNI 插件 ───────────────────────────────────
+  # NixOS 模块会自动通过 systemd 服务部署 Flannel
   services.kubernetes.kubelet.cni.packages = with pkgs; [ cni-plugins ];
-
-  # Flannel DaemonSet 部署（仅控制节点执行一次）
-  systemd.services.deploy-flannel = {
-    description = "Deploy Flannel CNI to Kubernetes cluster";
-    after = [ "kubelet.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig.Type = "oneshot";
-    script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --server https://127.0.0.1:6443 --certificate-authority /var/lib/kubernetes/secrets/ca.pem --client-certificate /var/lib/kubernetes/secrets/cluster-admin.pem --client-key /var/lib/kubernetes/secrets/cluster-admin-key.pem";
-    in ''
-      # 检查 flannel 是否已部署
-      if ! ${kubectl} get namespace kube-flannel &>/dev/null; then
-        echo "Deploying Flannel CNI..."
-        ${kubectl} apply --validate=false -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-      else
-        echo "Flannel already deployed"
-      fi
-    '';
-  };
 
   # ── 防火墙：通用端口 ───────────────────────────────────
   networking.firewall.allowedTCPPorts = [
@@ -106,7 +161,7 @@ in {
     10250       # kubelet API
   ];
 
-  # NodePort 范围（1-32767，通过 iptables 直接配置）
+  # NodePort 范围（1-32767）
   networking.firewall.extraCommands = ''
     iptables -A nixos-fw -p tcp --dport 1:32767 -j nixos-fw-accept
   '';

@@ -18,7 +18,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig.Type = "oneshot";
     script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --server https://127.0.0.1:6443 --certificate-authority /var/lib/kubernetes/secrets/ca.pem --client-certificate /var/lib/kubernetes/secrets/cluster-admin.pem --client-key /var/lib/kubernetes/secrets/cluster-admin-key.pem";
+      kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
       certManagerVersion = "v1.18.2";
     in ''
       # Check if cert-manager is already installed
@@ -38,7 +38,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig.Type = "oneshot";
     script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --server https://127.0.0.1:6443 --certificate-authority /var/lib/kubernetes/secrets/ca.pem --client-certificate /var/lib/kubernetes/secrets/cluster-admin.pem --client-key /var/lib/kubernetes/secrets/cluster-admin-key.pem";
+      kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
     in ''
       echo "Waiting for cert-manager webhook..."
       for i in $(seq 1 100); do
@@ -60,7 +60,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig.Type = "oneshot";
     script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --server https://127.0.0.1:6443 --certificate-authority /var/lib/kubernetes/secrets/ca.pem --client-certificate /var/lib/kubernetes/secrets/cluster-admin.pem --client-key /var/lib/kubernetes/secrets/cluster-admin-key.pem";
+      kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
       ingressclassManifest = pkgs.writeText "ingressclass.yaml" ''
         apiVersion: networking.k8s.io/v1
         kind: IngressClass
@@ -82,7 +82,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig.Type = "oneshot";
     script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --server https://127.0.0.1:6443 --certificate-authority /var/lib/kubernetes/secrets/ca.pem --client-certificate /var/lib/kubernetes/secrets/cluster-admin.pem --client-key /var/lib/kubernetes/secrets/cluster-admin-key.pem";
+      kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
       email = config.services.kubernetes.certManager.email or "nash@iffy.me";
       issuersManifest = pkgs.writeText "issuers.yaml" ''
         apiVersion: cert-manager.io/v1
