@@ -41,12 +41,17 @@ in
     builtins.foldl' (acc: clusterName:
       let
         cluster = clusters.${clusterName};
-        controlNodes = builtins.filter (n: cluster.nodes.${n}.role == "control") (builtins.attrNames cluster.nodes);
+        # 包含 control 和 combo 角色
+        controlNodes = builtins.filter (n:
+          let role = cluster.nodes.${n}.role;
+          in role == "control" || role == "combo"
+        ) (builtins.attrNames cluster.nodes);
         masterIP = if controlNodes != [] then cluster.nodes.${builtins.head controlNodes}.ip else null;
         injectMasterIP = nodeName: nodeAttrs:
-          if nodeAttrs.role == "worker" || (nodeAttrs.role == "control" && nodeName != builtins.head controlNodes)
-          then nodeAttrs // { inherit masterIP; }
-          else nodeAttrs;
+          let isFirst = controlNodes != [] && nodeName == builtins.head controlNodes;
+          in if nodeAttrs.role == "worker" || (!isFirst && (nodeAttrs.role == "control" || nodeAttrs.role == "combo"))
+            then nodeAttrs // { inherit masterIP; isFirstControl = false; }
+            else nodeAttrs // { isFirstControl = isFirst; };
       in
       acc // (builtins.foldl' (nodeAcc: nodeName:
         nodeAcc // {
@@ -58,7 +63,7 @@ in
   # K8s 节点生成函数
   mkK8sNode = name: attrs: let
     # 提取已处理的属性，其余作为 NixOS 模块注入
-    nodeModule = lib.removeAttrs attrs [ "hostname" "ip" "role" "runtime" "imports" ];
+    nodeModule = lib.removeAttrs attrs [ "hostname" "ip" "role" "runtime" "imports" "masterIP" "isFirstControl" ];
     # 获取运行时（必须显式指定）
     runtime = attrs.runtime or (throw "k8s node '${name}' is missing required 'runtime' field");
     # 获取 socket 路径
@@ -69,12 +74,18 @@ in
         --container-runtime-endpoint=unix://${socketPath} --runtime-request-timeout=10m --max-pods=500 --register-with-taints=""
       '';
     }] else [];
+    # 自动为第一个 control/combo 节点添加 API Server SANs
+    autoSansModule = lib.optionalAttrs (attrs.isFirstControl or false) {
+      services.kubernetes.apiserver.extraSANs = [ attrs.ip ];
+    };
   in lib.nixosSystem {
     specialArgs = { inherit inputs dataDir; };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
       ../../hosts/k8s-role.nix
     ] ++ k8sRoleModules.${attrs.role} ++ comboSocketModule ++ [
+      # 自动为第一个 control/combo 节点添加 API Server SANs
+      autoSansModule
       # 导入运行时特定模块
       runtimeModules.${runtime}
       # 注入节点特定的配置

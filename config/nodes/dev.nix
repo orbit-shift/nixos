@@ -16,7 +16,25 @@
       role = "combo";
       imports = [
         ../../hosts/server
+        ../../modules/server/coredns.nix  # CoreDNS DNS 插件
       ];
+
+      # ── CoreDNS 内网 DNS 服务 ──────────────────────────
+      services.myCoredns = {
+        templates = [
+          { zone = "s"; answers = [ "172.178.5.123" ]; }
+          { zone = "a"; answers = [ "172.178.1.37" ]; }
+          { zone = "x"; answers = [ "172.178.1.58" "172.178.1.37" ]; }
+        ];
+        forward = {
+          upstream = [
+            "223.5.5.5"            # 阿里云
+            "119.29.29.29"         # 腾讯云 / DNSPod
+            "1.1.1.1"              # Cloudflare
+          ];
+          forceTcp = false;
+        };
+      };
 
       # ── 数据盘挂载 ──────────────────────────────────────
       # Btrfs 子卷 @ 挂载到 dataDir（由 flake 参数传入，如 /data）
@@ -34,8 +52,9 @@
       ];
 
       # ── 节点特有 API Server SANs ─────────────────────────
-      # 允许通过此 IP 访问 API Server（用于远程 nixos-rebuild 或 kubectl）
-      services.kubernetes.apiserver.extraSANs = [ "172.178.5.123" ];
+      # 已由 k8s-lib.nix 自动为第一个 control/combo 节点注入
+      # 如需额外 SAN，可在此追加：
+      # services.kubernetes.apiserver.extraSANs = [ "dxserver.local" ];
     };
   };
 }
