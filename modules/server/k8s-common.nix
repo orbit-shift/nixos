@@ -6,6 +6,11 @@
     description = "Container runtime for Kubernetes nodes";
   };
 
+  options.services.kubernetes.adminEmail = lib.mkOption {
+    type = lib.types.str;
+    description = "Cluster admin email address (used for ACME registration, etc.)";
+  };
+
   config = let
     runtime = config.services.kubernetes.runtime;
 
