@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, config, ... }: {
   imports = [
     ./k8s-common.nix
     ./k8s-addons.nix
@@ -15,8 +15,7 @@
   services.etcd.enable = true;
 
   # ── 防火墙：控制平面端口 ───────────────────────────────
-  networking.firewall.allowedTCPPorts = [
-    80 443      # Ingress/Service
-    2379 2380   # etcd
-  ];
+  services.kubernetes.firewallPorts =
+    [ 80 443 2379 2380 ]
+    ++ lib.optionals config.services.kubernetes.isCertServer [ 9090 ];
 }

@@ -1,7 +1,7 @@
 { pkgs, lib, dataDir, ... }: {
   # ── COSMIC Desktop Environment ─────────────────────────
   services.desktopManager.cosmic.enable = true;
-  services.displayManager.cosmic-greeter.enable = true;
+  services.displayManager.cosmic-greeter.enable = lib.mkDefault true;
 
   # ── Pipewire Audio ─────────────────────────────────────
   services.pipewire = {

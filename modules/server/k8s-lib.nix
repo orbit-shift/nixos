@@ -115,8 +115,7 @@ let
     ] ++ k8sRoleModules.${attrs.role} ++ comboSocketModule ++ [
       # 自动为第一个 control/combo 节点添加 API Server SANs
       autoSansModule
-      # 证书同步：master 提供公钥，worker 自动拉取
-      certSyncModule
+    ] ++ certSyncModule ++ [
       # 导入运行时特定模块
       runtimeModules.${runtime}
       # 注入节点特定的配置

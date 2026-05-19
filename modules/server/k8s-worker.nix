@@ -6,7 +6,7 @@
   services.kubernetes.roles = [ "node" ];
 
   # ── 防火墙：工作节点端口 ───────────────────────────────
-  networking.firewall.allowedTCPPorts = [
+  services.kubernetes.firewallPorts = [
     80 443      # Ingress/Service
     10256       # kube-proxy
   ];

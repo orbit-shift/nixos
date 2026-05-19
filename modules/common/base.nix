@@ -17,7 +17,7 @@
   # ── System State Version ─────────────────────────────────
   # Set once on initial install, never change unless doing a major version upgrade.
   # All hosts inherit this value from base.nix.
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 
   # 每周自动清理未使用的包
   nix.gc = {

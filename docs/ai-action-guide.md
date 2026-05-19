@@ -66,3 +66,25 @@ python3 -c "import base64; print('sha256-' + base64.b64encode(bytes.fromhex('9ca
 ```bash
 HEX=$(ssh dx 'curl -sL <URL> | sha256sum' | cut -d' ' -f1) && echo "sha256-$(python3 -c "import base64; print(base64.b64encode(bytes.fromhex('$HEX')).decode())")"
 ```
+
+## NixOS Configuration Guidelines
+
+### Modular Declarations & Merge Logic
+- **Keep Modular Structure**: Respect independent declarations across modules (e.g., `common`, `control`, `worker`). Do **NOT** consolidate list options (like firewall ports) into a single file just to avoid "multiple definitions" errors.
+- **Use Custom Merge for Deduplication**: If list options need to be declared in multiple modules and merged, override the `merge` function to handle concatenation and deduplication:
+  ```nix
+  options.services.kubernetes.firewallPorts = lib.mkOption {
+    type = lib.types.listOf lib.types.port;
+    default = [];
+    merge = loc: defs: lib.unique (lib.concatMap (def: def.value) defs);
+  };
+  ```
+  This achieves the desired pattern: **Separate declarations → Automatic aggregation → Final deduplication → Apply to firewall**.
+  The merged ports are then applied via: `networking.firewall.allowedTCPPorts = lib.unique config.services.kubernetes.firewallPorts;`
+
+### Verify Original Code Context
+- **Check Error Traces**: Before claiming code "wasn't there originally", strictly verify against the user-provided Error Trace or file context.
+- **Lesson Learned**: `services.kubernetes.firewallPorts` (via `networking.firewall.allowedTCPPorts`) was present in the original file (Line 251-252 in the error trace). Always trust the evidence in the context.
+
+### Post-Modification Verification
+- **Run `sudo nix flake check`**: After modifying any configuration, execute `sudo nix flake check` to validate the syntax and options immediately. If `sudo` is not available in the current shell (e.g., in the AI agent environment), notify the user to run this command before `nixos-rebuild`.

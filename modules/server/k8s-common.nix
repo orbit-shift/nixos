@@ -16,6 +16,13 @@
     description = "Cluster Pod CIDR range (used by Flannel for network configuration)";
   };
 
+  # 自定义防火墙端口选项：支持多模块声明、自动合并去重
+  options.services.kubernetes.firewallPorts = lib.mkOption {
+    type = lib.types.listOf lib.types.port;
+    default = [];
+    description = "K8s firewall ports, automatically merged from all modules.";
+  };
+
   options.services.kubernetes.autoSyncCerts = lib.mkOption {
     type = lib.types.bool;
     default = false;
@@ -61,8 +68,8 @@
     };
   };
 
-  # Master 节点开放证书同步端口
-  networking.firewall.allowedTCPPorts = lib.mkIf config.services.kubernetes.isCertServer [ 9090 ];
+  # 将 K8s 合并后的端口应用到系统防火墙（自动去重）
+  networking.firewall.allowedTCPPorts = lib.unique config.services.kubernetes.firewallPorts;
 
   # ── 证书同步：非 master 节点在 kubelet 启动前从 master 拉取证书 ──
   systemd.services.sync-k8s-certs = lib.mkIf config.services.kubernetes.autoSyncCerts {
@@ -198,6 +205,7 @@
   # NodePort 范围扩展 + Aggregated API 认证
   # 使用 NixOS 自动生成的 CA 作为 requestheader CA（与 proxy-client 证书匹配）
   services.kubernetes.apiserver.extraOpts = lib.concatStringsSep " " [
+    "--allow-privileged=true"
     "--service-node-port-range=1-32767"
     "--requestheader-client-ca-file=/var/lib/kubernetes/secrets/ca.pem"
     "--requestheader-allowed-names=front-proxy-client"
@@ -249,7 +257,7 @@
   services.kubernetes.flannel.enable = lib.mkForce false;
 
   # ── 防火墙：通用端口 ───────────────────────────────────
-  networking.firewall.allowedTCPPorts = [
+  services.kubernetes.firewallPorts = [
     6443        # kube-apiserver（所有节点可能需要访问）
     10250       # kubelet API
   ];
