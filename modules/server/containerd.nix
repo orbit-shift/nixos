@@ -72,7 +72,8 @@ in {
       cni.bin_dir = "/opt/cni/bin";
 
       # ── 镜像仓库配置（containerd v2 新格式：config_path）──
-      # 已由 environment.etc 生成 hosts.toml 接管，无需 registry.configs
+      # CRI 插件必须显式指定 config_path 才能读取 hosts.toml
+      registry.config_path = "/etc/containerd/certs.d";
     };
   };
 }
