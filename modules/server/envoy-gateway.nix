@@ -86,12 +86,12 @@
                     port: 22
                     nodePort: 22
                     protocol: TCP
-                    targetPort: 22
+                    targetPort: 10022
                   - name: udp-dns
                     port: 53
                     nodePort: 10053
                     protocol: UDP
-                    targetPort: 53
+                    targetPort: 10053
     ---
     # ── 统一 Gateway（单 Service，多 listeners，类似 Istio 模式）───
     apiVersion: gateway.networking.k8s.io/v1
