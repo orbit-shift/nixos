@@ -34,6 +34,23 @@
       ' > $out
     '';
 
+  # Kubernetes Reflector manifest for cross-namespace Secret sync
+  reflectorManifest = pkgs.fetchurl {
+    url = "https://github.com/emberstack/kubernetes-reflector/releases/latest/download/reflector.yaml";
+    hash = "sha256-SwcNk/ovfQqiS7pqHrIi+DndcFSulYQI2i+wqPvZ8R0=";
+  };
+
+  # Generate YAML snippet for certificateRefs from option
+  certRefsYaml = ''
+            - name: tls-envoy-gateway
+              kind: Secret
+              group: ""
+  '' + lib.concatMapStrings (cert: ''
+            - name: ${cert}
+              kind: Secret
+              group: ""
+  '') config.services.envoyGateway.appCerts;
+
   # Envoy Gateway 资源清单 (GatewayClass + Gateway + ConfigMap patch)
   envoyGatewayManifest = pkgs.writeText "envoy-gateways.yaml" ''
     apiVersion: gateway.networking.k8s.io/v1
@@ -127,9 +144,7 @@
         tls:
           mode: Terminate
           certificateRefs:
-            - name: tls-envoy-gateway
-              kind: Secret
-              group: ""
+${certRefsYaml}
       - name: tcp-ssh
         port: 22
         protocol: TCP
@@ -159,6 +174,17 @@
   '';
 
 in {
+  options = {
+    services.envoyGateway.appCerts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        List of application certificate secrets to mount on the unified Gateway.
+        These secrets are expected to be synced via Reflector from app namespaces.
+      '';
+    };
+  };
+
   config = {
     # ── Gateway API CRDs ──────────────────────────────
     systemd.services.deploy-gateway-api-crds-eg = {
@@ -200,7 +226,19 @@ in {
       '';
     };
 
-    # ── 清理 Envoy Gateway ──────────────────────────────
+    # ── Deploy Kubernetes Reflector ──────────────────────────
+    systemd.services.deploy-reflector = {
+    description = "Deploy emberstack/kubernetes-reflector for cross-namespace Secret sync";
+    after = [ "kube-apiserver.service" ];
+    wantedBy = lib.mkForce [];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      echo "[deploy-reflector] Installing Reflector..."
+      ${kubectl} apply --server-side -f ${reflectorManifest}
+    '';
+  };
+
+  # ── 清理 Envoy Gateway ──────────────────────────────
     systemd.services.cleanup-envoy-gateway = {
       description = "Cleanup Envoy Gateway resources";
       serviceConfig = {

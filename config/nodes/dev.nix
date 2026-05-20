@@ -8,6 +8,13 @@
   podCIDR = "10.1.0.0/16";  # 集群 Pod CIDR（需包含各节点 PodCIDR，如 10.1.1.0/24）
   adminEmail = "nash@iffy.me";  # 集群管理员邮箱
 
+  # ── Envoy Gateway 证书管理 ────────────────────────────
+  # 定义需要挂载到统一 Gateway 的应用证书列表（由 Reflector 同步）
+  services.envoyGateway.appCerts = [
+    "tls-warpgate"
+    "tls-app-xmh"
+  ];
+
   # ── 节点定义 ──────────────────────────────────────────
   nodes = {
     # 开发服务器（combo 角色）

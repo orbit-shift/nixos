@@ -16,55 +16,26 @@
 
 ## Fetch SRI Hash for `fetchurl`
 
-### Problem
-
-`nix-prefetch-url` outputs **Nix base32** format (52 chars), but modern nixpkgs `fetchurl` requires **SRI base64** format (44 chars with `=` padding).
-
+Use the `fetch-sri` utility in `x.nu`:
+```nushell
+source x.nu
+utils fetch-sri <URL>
 ```
-# Nix base32 (invalid for new nixpkgs):
-sha256-0j3jmy3ci93afc0macq50a71a6wlp9r47bp50vc1qxx2xqivg9lw
+> 📘 For detailed standards, see [Nushell Style Guide](nushell-style.md).
 
-# SRI base64 (correct):
-sha256-nKa3I+6idxzYBuWuQ3K6lBsVjgIFM1UBc2qkyIavckg=
-```
+## Nushell Programming Style Guide
 
-### Steps
-
-1. **SSH to target server** and get the Nix base32 hash:
-   ```bash
-   ssh dx 'nix-prefetch-url <URL>'
-   ```
-
-2. **Get the hex SHA256** of the file:
-   ```bash
-   ssh dx 'curl -sL <URL> | sha256sum'
-   ```
-
-3. **Convert hex to SRI base64**:
-   ```bash
-   python3 -c "import base64; print('sha256-' + base64.b64encode(bytes.fromhex('<HEX_HASH>')).decode())"
-   ```
-
-### Example
-
-```bash
-# Step 1: Get base32 hash (for reference only)
-ssh dx 'nix-prefetch-url https://github.com/envoyproxy/gateway/releases/download/v1.8.0/install.yaml'
-# Output: 0j3jmy3ci93afc0macq50a71a6wlp9r47bp50vc1qxx2xqivg9lw
-
-# Step 2: Get hex SHA256
-ssh dx 'curl -sL https://github.com/envoyproxy/gateway/releases/download/v1.8.0/install.yaml | sha256sum'
-# Output: 9ca6b723eea2771cd806e5ae4372ba941b158e0205335501736aa4c886af7248
-
-# Step 3: Convert to SRI
-python3 -c "import base64; print('sha256-' + base64.b64encode(bytes.fromhex('9ca6b723eea2771cd806e5ae4372ba941b158e0205335501736aa4c886af7248')).decode())"
-# Output: sha256-nKa3I+6idxzYBuWuQ3K6lBsVjgIFM1UBc2qkyIavckg=
+### Pipeline-First
+Prefer transforming data through a stream (`|`) over intermediate variables (`let`).
+```nushell
+# Good
+^curl -sL $url | hash sha256 | decode hex | encode base64 | $"sha256-($in)"
 ```
 
-### One-liner
-
-```bash
-HEX=$(ssh dx 'curl -sL <URL> | sha256sum' | cut -d' ' -f1) && echo "sha256-$(python3 -c "import base64; print(base64.b64encode(bytes.fromhex('$HEX')).decode())")"
+### Binary Safety
+Always use the `^` escape for external commands processing binary data to prevent Nushell from parsing UTF-8/Table structures and corrupting the stream.
+```nushell
+^curl ... | hash sha256
 ```
 
 ## NixOS Configuration Guidelines

@@ -34,3 +34,13 @@ export module portable {
         sudo nixos-install --root /mnt --no-root-password --flake $"($config)#($host)"
     }
 }
+
+export module utils {
+    export def "fetch-sri" [url: string] {
+        ^curl -sL $url
+        | hash sha256
+        | decode hex
+        | encode base64
+        | $"sha256-($in)"
+    }
+}
