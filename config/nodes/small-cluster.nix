@@ -6,11 +6,12 @@
   # ── 集群级配置 ────────────────────────────────────────
   runtime = "containerd";  # 容器运行时：crio / containerd
   podCIDR = "10.1.0.0/16";  # 集群 Pod CIDR（需包含各节点 PodCIDR，如 10.1.1.0/24）
+  adminEmail = "admin@example.com";  # 集群管理员邮箱
 
   # ── 节点定义 ──────────────────────────────────────────
   nodes = {
-    k8s-combo-01 = { hostname = "k8s-combo-01"; ip = "192.168.1.31"; role = "combo"; imports = []; };
-    k8s-combo-02 = { hostname = "k8s-combo-02"; ip = "192.168.1.32"; role = "combo"; imports = []; };
-    k8s-combo-03 = { hostname = "k8s-combo-03"; ip = "192.168.1.33"; role = "combo"; imports = []; };
+    k8s-combo-01 = { hostname = "k8s-combo-01"; ip = "192.168.1.31"; role = "combo"; imports = []; fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; autoResize = true; }; };
+    k8s-combo-02 = { hostname = "k8s-combo-02"; ip = "192.168.1.32"; role = "combo"; imports = []; fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; autoResize = true; }; };
+    k8s-combo-03 = { hostname = "k8s-combo-03"; ip = "192.168.1.33"; role = "combo"; imports = []; fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; autoResize = true; }; };
   };
 }

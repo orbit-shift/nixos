@@ -12,33 +12,9 @@
       nerd-fonts.monaspace
     ];
     fontconfig = {
-      # ── 渲染配置（匹配 ARCH/EndeavourOS 默认表现） ─────
-      hinting.enable = true;
-      hinting.autohint = false;
-      antialias = true;
-      rgba = "rgb";         # LCD 子像素排列
-      # ── 自定义 fontconfig（hintslight + lcddefault） ──
-      # 对应 ARCH 的 10-hinting-slight.conf 和 11-lcdfilter-default.conf
-      conf = [
-        ''
-          <?xml version="1.0"?>
-          <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
-          <fontconfig>
-            <!-- hintstyle: slight（ARCH 默认） -->
-            <match target="font">
-              <edit name="hintstyle" mode="assign">
-                <const>hintslight</const>
-              </edit>
-            </match>
-            <!-- lcdfilter: default（ARCH 默认） -->
-            <match target="font">
-              <edit name="lcdfilter" mode="assign">
-                <const>lcddefault</const>
-              </edit>
-            </match>
-          </fontconfig>
-        ''
-      ];
+      enable = true;
+      # hinting, antialias, rgba removed in newer nixpkgs;
+      # use environment.etc for custom rules below.
       # ── 默认字体映射 ─────────────────────────────
       defaultFonts = {
         monospace = [ "Lilex" "MonaspiceAr" "Noto Sans Mono CJK SC" ];
@@ -47,4 +23,36 @@
       };
     };
   };
+
+  # Custom fontconfig rules (was fonts.fontconfig.conf/hinting/rgba, removed in newer nixpkgs)
+  environment.etc."fonts/conf.d/99-custom-rendering.conf".text = ''
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+    <fontconfig>
+      <!-- enable antialias -->
+      <match target="font">
+        <edit name="antialias" mode="assign">
+          <bool>true</bool>
+        </edit>
+      </match>
+      <!-- hintstyle: slight（ARCH 默认） -->
+      <match target="font">
+        <edit name="hintstyle" mode="assign">
+          <const>hintslight</const>
+        </edit>
+      </match>
+      <!-- lcdfilter: default（ARCH 默认） -->
+      <match target="font">
+        <edit name="lcdfilter" mode="assign">
+          <const>lcddefault</const>
+        </edit>
+      </match>
+      <!-- rgb subpixel rendering -->
+      <match target="font">
+        <edit name="rgba" mode="assign">
+          <const>rgb</const>
+        </edit>
+      </match>
+    </fontconfig>
+  '';
 }
