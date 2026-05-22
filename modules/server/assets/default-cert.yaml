@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: envoy-gateway-cert
+  namespace: envoy-gateway-system
+spec:
+  secretName: tls-envoy-gateway
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
+  dnsNames:
+  - "*"

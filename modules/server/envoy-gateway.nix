@@ -5,6 +5,8 @@
   kubeconfig = "/etc/kubernetes/cluster-admin.kubeconfig";
   kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig ${kubeconfig}";
 
+  assets = ./.;
+
   # Gateway API CRD 文件 (experimental)
   gatewayApiCrdFile = pkgs.fetchurl {
     url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/experimental-install.yaml";
@@ -74,117 +76,11 @@ EOF
               group: ""
   '') config.services.envoyGateway.appCerts;
 
-  # Envoy Gateway 资源清单 (GatewayClass + Gateway + ConfigMap patch)
-  envoyGatewayManifest = pkgs.writeText "envoy-gateways.yaml" ''
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: GatewayClass
-    metadata:
-      name: envoy
-    spec:
-      controllerName: gateway.envoyproxy.io/gatewayclass-controller
-    ---
-    # 配置 Envoy proxy 使用 IfNotPresent 策略，优先使用本地镜像
-    # 指定使用本地已有的镜像地址（避免 CRI 无法识别 docker.io tag 的问题）
-    apiVersion: gateway.envoyproxy.io/v1alpha1
-    kind: EnvoyProxy
-    metadata:
-      name: default
-      namespace: envoy-gateway-system
-    spec:
-      provider:
-        type: Kubernetes
-        kubernetes:
-          envoyDaemonSet:
-            patch:
-              type: StrategicMerge
-              value:
-                spec:
-                  template:
-                    spec:
-                      containers:
-                      - name: envoy
-                        imagePullPolicy: IfNotPresent
-                        image: docker.lizzie.fun/envoyproxy/envoy:distroless-v1.38.0
-          envoyService:
-            type: NodePort
-            externalTrafficPolicy: Local
-            patch:
-              type: StrategicMerge
-              value:
-                spec:
-                  ports:
-                  - name: http
-                    port: 80
-                    nodePort: 80
-                    protocol: TCP
-                    targetPort: 10080
-                  - name: https
-                    port: 443
-                    nodePort: 443
-                    protocol: TCP
-                    targetPort: 10443
-                  - name: tcp-ssh
-                    port: 22
-                    nodePort: 22
-                    protocol: TCP
-                    targetPort: 10022
-                  - name: udp-dns
-                    port: 53
-                    nodePort: 10053
-                    protocol: UDP
-                    targetPort: 10053
-    ---
-    # ── 统一 Gateway（单 Service，多 listeners，类似 Istio 模式）───
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
-    metadata:
-      name: envoy-gateway
-      namespace: envoy-gateway-system
-    spec:
-      gatewayClassName: envoy
-      infrastructure:
-        parametersRef:
-          group: gateway.envoyproxy.io
-          kind: EnvoyProxy
-          name: default
-      listeners:
-      - name: http
-        port: 80
-        protocol: HTTP
-        allowedRoutes:
-          kinds:
-            - kind: HTTPRoute
-          namespaces:
-            from: All
-      - name: https
-        port: 443
-        protocol: HTTPS
-        allowedRoutes:
-          kinds:
-            - kind: HTTPRoute
-          namespaces:
-            from: All
-        tls:
-          mode: Terminate
-          certificateRefs:
-${certRefsYaml}
-      - name: tcp-ssh
-        port: 22
-        protocol: TCP
-        allowedRoutes:
-          kinds:
-            - kind: TCPRoute
-          namespaces:
-            from: All
-      - name: udp-dns
-        port: 53
-        protocol: UDP
-        allowedRoutes:
-          kinds:
-            - kind: UDPRoute
-          namespaces:
-            from: All
-  '';
+  # Envoy Gateway 资源清单 (GatewayClass + EnvoyProxy + Gateway)
+  envoyGatewayManifest = pkgs.substituteAll {
+    src = "${assets}/envoy-gateways.yaml";
+    CERT_REFS = certRefsYaml;
+  };
 
   # 清理脚本
   cleanupEnvoyGateway = pkgs.writeShellScript "cleanup-envoy-gateway.sh" ''

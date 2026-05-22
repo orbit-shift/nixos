@@ -71,48 +71,10 @@
     script = let
       kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
       email = config.services.kubernetes.certManager.email or "nash@iffy.me";
-      issuersManifest = pkgs.writeText "issuers.yaml" ''
-        apiVersion: cert-manager.io/v1
-        kind: ClusterIssuer
-        metadata:
-          name: selfsigned
-        spec:
-          selfSigned: {}
-        ---
-        apiVersion: cert-manager.io/v1
-        kind: ClusterIssuer
-        metadata:
-          name: letsencrypt
-        spec:
-          acme:
-            server: https://acme-v02.api.letsencrypt.org/directory
-            email: ${email}
-            privateKeySecretRef:
-              name: letsencrypt
-            solvers:
-            - http01:
-                gatewayHTTPRoute:
-                  parentRefs:
-                  - name: envoy-gateway
-                    namespace: envoy-gateway-system
-        ---
-        apiVersion: cert-manager.io/v1
-        kind: ClusterIssuer
-        metadata:
-          name: letsencrypt-staging
-        spec:
-          acme:
-            server: https://acme-staging-v02.api.letsencrypt.org/directory
-            email: ${email}
-            privateKeySecretRef:
-              name: letsencrypt-staging
-            solvers:
-            - http01:
-                gatewayHTTPRoute:
-                  parentRefs:
-                  - name: envoy-gateway
-                    namespace: envoy-gateway-system
-      '';
+      issuersManifest = pkgs.substituteAll {
+        src = ./. + "/assets/cert-issuers.yaml";
+        EMAIL = email;
+      };
     in ''
       echo "Deploying ClusterIssuers..."
       ${kubectl} apply -f ${issuersManifest}
@@ -130,20 +92,7 @@
     };
     script = let
       kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig";
-      certManifest = pkgs.writeText "default-cert.yaml" ''
-        apiVersion: cert-manager.io/v1
-        kind: Certificate
-        metadata:
-          name: envoy-gateway-cert
-          namespace: envoy-gateway-system
-        spec:
-          secretName: tls-envoy-gateway
-          issuerRef:
-            name: selfsigned
-            kind: ClusterIssuer
-          dnsNames:
-          - "*"
-      '';
+      certManifest = ./. + "/assets/default-cert.yaml";
     in ''
       echo "Deploying default Certificate for tls-envoy-gateway..."
       ${kubectl} apply -f ${certManifest}

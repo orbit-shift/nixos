@@ -1,0 +1,77 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: web
+  namespace: istio-system
+spec:
+  addresses:
+  - value: istio-ingressgateway.istio-system.svc.cluster.local
+    type: Hostname
+  gatewayClassName: istio
+  listeners:
+  - name: web-https
+    port: 443
+    protocol: HTTPS
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: cert-web
+          kind: Secret
+          group: core
+  - name: web-http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: tcp
+  namespace: istio-system
+spec:
+  addresses:
+  - value: istio-ingressgateway.istio-system.svc.cluster.local
+    type: Hostname
+  gatewayClassName: istio
+  listeners:
+  - name: tcp-ssh
+    port: 22
+    protocol: TCP
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: udp
+  namespace: istio-system
+spec:
+  addresses:
+  - value: istio-ingressgateway.istio-system.svc.cluster.local
+    type: Hostname
+  gatewayClassName: istio
+  listeners:
+  - name: udp-dns
+    port: 53
+    protocol: UDP
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"

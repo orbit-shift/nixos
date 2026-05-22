@@ -1,0 +1,105 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: default
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDaemonSet:
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              template:
+                spec:
+                  containers:
+                  - name: envoy
+                    imagePullPolicy: IfNotPresent
+                    image: docker.lizzie.fun/envoyproxy/envoy:distroless-v1.38.0
+      envoyService:
+        type: NodePort
+        externalTrafficPolicy: Local
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+              - name: http
+                port: 80
+                nodePort: 80
+                protocol: TCP
+                targetPort: 10080
+              - name: https
+                port: 443
+                nodePort: 443
+                protocol: TCP
+                targetPort: 10443
+              - name: tcp-ssh
+                port: 22
+                nodePort: 22
+                protocol: TCP
+                targetPort: 10022
+              - name: udp-dns
+                port: 53
+                nodePort: 10053
+                protocol: UDP
+                targetPort: 10053
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: default
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      kinds:
+        - kind: HTTPRoute
+      namespaces:
+        from: All
+  - name: https
+    port: 443
+    protocol: HTTPS
+    allowedRoutes:
+      kinds:
+        - kind: HTTPRoute
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+@CERT_REFS@
+  - name: tcp-ssh
+    port: 22
+    protocol: TCP
+    allowedRoutes:
+      kinds:
+        - kind: TCPRoute
+      namespaces:
+        from: All
+  - name: udp-dns
+    port: 53
+    protocol: UDP
+    allowedRoutes:
+      kinds:
+        - kind: UDPRoute
+      namespaces:
+        from: All

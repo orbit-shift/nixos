@@ -3,113 +3,17 @@
   kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig ${kubeconfig}";
   istioctl = "${pkgs.istioctl}/bin/istioctl --kubeconfig ${kubeconfig}";
 
+  assets = ./.;
+
   # IstioOperator 配置：包含所有 gateway 设置（含 TCP 端口）
-  istioOperator = pkgs.writeText "istio-operator.yaml" ''
-    apiVersion: install.istio.io/v1alpha1
-    kind: IstioOperator
-    metadata:
-      name: istio
-      namespace: istio-system
-    spec:
-      profile: minimal
-      components:
-        ingressGateways:
-          - name: istio-ingressgateway
-            enabled: true
-            k8s:
-              service:
-                type: NodePort
-                ports:
-                  - name: status-port
-                    port: 15021
-                    targetPort: 15021
-                  - name: http2
-                    port: 80
-                    targetPort: 8080
-                    nodePort: 80
-                  - name: https
-                    port: 443
-                    targetPort: 8443
-                    nodePort: 443
-                  - name: tcp-ssh
-                    port: 22
-                    targetPort: 22
-                    nodePort: 22
-                  - name: udp-dns
-                    port: 53
-                    protocol: UDP
-                    targetPort: 53
-                    nodePort: 10053
-        egressGateways:
-          - name: istio-egressgateway
-            enabled: true
-      values:
-        global:
-          proxy:
-            resources:
-              requests:
-                cpu: 100m
-                memory: 128Mi
-              limits:
-                cpu: 500m
-                memory: 256Mi
-        gateways:
-          istio-ingressgateway:
-            runAsRoot: true
-  '';
+  istioOperator = "${assets}/istio-operator.yaml";
 
   # 强制清理 Istio 资源（处理 finalizers 卡住问题）
-  cleanupIstio = pkgs.writeShellScript "cleanup-istio.sh" ''
-    set -e
-    KUBECTL="${kubectl}"
-
-    echo "[cleanup-istio] Force-cleaning istio-system namespace..."
-
-    # 1. 删除 Gateway 资源的 finalizers（最常见卡住原因）
-    echo "[cleanup-istio] Removing Gateway finalizers..."
-    for gw in $($KUBECTL get gateway -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}' 2>/dev/null || true); do
-      ns=$(echo $gw | cut -d/ -f1)
-      name=$(echo $gw | cut -d/ -f2)
-      $KUBECTL patch gateway $name -n $ns --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
-    done
-
-    # 2. 删除所有 Istio 相关 CRD 资源的 finalizers
-    echo "[cleanup-istio] Removing Istio CR finalizers..."
-    for crd in envoyfilter gateway grpcroute httproute referencegrant tcproute tlsservice udproute virtualservice wasmplugin; do
-      for ns in $($KUBECTL get ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null); do
-        for item in $($KUBECTL get $crd -n $ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true); do
-          $KUBECTL patch $crd $item -n $ns --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
-        done
-      done
-    done
-
-    # 3. 删除 istio-system 命名空间中所有资源的 finalizers
-    echo "[cleanup-istio] Removing all istio-system resource finalizers..."
-    for resource in $($KUBECTL api-resources --verbs=list --namespaced -o name 2>/dev/null | head -30); do
-      for item in $($KUBECTL get $resource -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true); do
-        $KUBECTL patch $resource $item -n istio-system --type=json -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
-      done
-    done
-
-    # 4. 强制删除 istio-system 命名空间
-    echo "[cleanup-istio] Deleting istio-system namespace..."
-    $KUBECTL delete namespace istio-system --grace-period=0 --force 2>/dev/null || true
-
-    # 5. 等待命名空间完全删除（最多 60 秒）
-    echo "[cleanup-istio] Waiting for namespace to be deleted..."
-    for i in $(seq 1 12); do
-      if ! $KUBECTL get namespace istio-system &>/dev/null; then
-        echo "[cleanup-istio] istio-system deleted successfully."
-        exit 0
-      fi
-      sleep 5
-    done
-
-    echo "[cleanup-istio] WARNING: istio-system still exists after 60s."
-    echo "[cleanup-istio] Manual intervention may be required:"
-    echo "[cleanup-istio]   kubectl get namespace istio-system -o json | jq '.spec.finalizers=[]' | kubectl replace --raw /api/v1/namespaces/istio-system/finalize -f -"
-    exit 1
-  '';
+  cleanupIstio = pkgs.substituteAll {
+    src = "${assets}/cleanup-istio.sh";
+    KUBECTL = kubectl;
+    isExecutable = true;
+  };
 
   # Gateway API CRD 文件（experimental 通道，包含 TCPRoute/UDPRoute/GRPCRoute）
   gatewayApiCrdFile = pkgs.fetchurl {
@@ -118,85 +22,7 @@
   };
 
   # Gateway 资源清单 (web + ssh/tcp + udp)
-  gatewayManifest = pkgs.writeText "gateways.yaml" ''
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
-    metadata:
-      name: web
-      namespace: istio-system
-    spec:
-      addresses:
-      - value: istio-ingressgateway.istio-system.svc.cluster.local
-        type: Hostname
-      gatewayClassName: istio
-      listeners:
-      - name: web-https
-        port: 443
-        protocol: HTTPS
-        allowedRoutes:
-          namespaces:
-            from: Selector
-            selector:
-              matchLabels:
-                shared-gateway-access: "true"
-        tls:
-          mode: Terminate
-          certificateRefs:
-            - name: cert-web
-              kind: Secret
-              group: core
-      - name: web-http
-        port: 80
-        protocol: HTTP
-        allowedRoutes:
-          namespaces:
-            from: Selector
-            selector:
-              matchLabels:
-                shared-gateway-access: "true"
-    ---
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
-    metadata:
-      name: tcp
-      namespace: istio-system
-    spec:
-      addresses:
-      - value: istio-ingressgateway.istio-system.svc.cluster.local
-        type: Hostname
-      gatewayClassName: istio
-      listeners:
-      - name: tcp-ssh
-        port: 22
-        protocol: TCP
-        allowedRoutes:
-          namespaces:
-            from: Selector
-            selector:
-              matchLabels:
-                shared-gateway-access: "true"
-    ---
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
-    metadata:
-      name: udp
-      namespace: istio-system
-    spec:
-      addresses:
-      - value: istio-ingressgateway.istio-system.svc.cluster.local
-        type: Hostname
-      gatewayClassName: istio
-      listeners:
-      - name: udp-dns
-        port: 53
-        protocol: UDP
-        allowedRoutes:
-          namespaces:
-            from: Selector
-            selector:
-              matchLabels:
-                shared-gateway-access: "true"
-  '';
+  gatewayManifest = "${assets}/istio-gateways.yaml";
 
 in {
   config = {
