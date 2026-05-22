@@ -19,6 +19,9 @@ in
         if [[ $- == *i* && -z "$NU_SHELL" ]] && command -v nu >/dev/null 2>&1; then
           export NU_SHELL=1
           nu --login
+          # 退出码 0 = 用户正常输入 exit → 自动退出 bash（只需一次 exit）
+          # 退出码 ≠0 = nu 崩溃（配置不兼容） → 留在 bash 里修复
+          [ $? -eq 0 ] && exit
         fi
       '';
     }
