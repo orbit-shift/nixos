@@ -1,8 +1,6 @@
-{ ... }: {
+{ user, email, ... }: {
   programs.git = {
     enable      = true;
-    settings.user.name  = "master";
-    settings.user.email = "you@example.com";   # 改成你的邮箱
 
     signing = {
       # 用 SSH key 签名（比 GPG 简单）
@@ -12,6 +10,10 @@
     };
 
     settings = {
+      user = {
+        name  = user;
+        email = email;
+      };
       init.defaultBranch   = "main";
       push.autoSetupRemote = true;
       pull.rebase          = true;

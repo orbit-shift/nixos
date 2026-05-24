@@ -1,4 +1,4 @@
-{ inputs, pkgs, lib, ... }: {
+{ inputs, pkgs, lib, user, ... }: {
   imports = [
     ./existing-disk.nix
     # ./existing-btrfs.nix  # 现有磁盘挂载配置（不格式化）
@@ -56,7 +56,7 @@
 
   # 自动登录 master 用户，启动即用
   networking.hostName = "portable";
-  services.getty.autologinUser = "master";
+  services.getty.autologinUser = user;
 
   # ── 图形界面配置 ──────────────────────────────────
   # wayland.windowManager.hyprland.enable = true;

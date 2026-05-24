@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, user, ... }:
 
 /*
 ╔══════════════════════════════════════════════════════════╗
@@ -66,7 +66,7 @@
   ];
 
   # 3. 将用户加入组，免 sudo 管理 virsh
-  users.users.master.extraGroups = [ "libvirtd" "kvm" ];
+  users.users.${user}.extraGroups = [ "libvirtd" "kvm" ];
 
   # 4. 安装必要的命令行工具
   environment.systemPackages = with pkgs; [

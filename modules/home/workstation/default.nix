@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }: {
+{ config, pkgs, lib, inputs, user, ... }: {
   imports = [
     ../common.nix
     ../shell.nix
@@ -9,8 +9,8 @@
   ];
 
   home = {
-    username = "master";
-    homeDirectory = "/home/master";
+    username = "${user}";
+    homeDirectory = "/home/${user}";
   };
 
   # 工作站开发模式：符号链接 + git clone

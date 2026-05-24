@@ -1,5 +1,5 @@
-{ pkgs, ... }: {
-  users.users.master = {
+{ pkgs, user, ... }: {
+  users.users.${user} = {
     isNormalUser = true;
     shell = pkgs.bash;
     # 密码 mkpasswd -m yescrypt my-password

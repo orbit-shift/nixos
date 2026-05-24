@@ -1,4 +1,4 @@
-{ lib, inputs, dataDir, self, ... }: {
+{ lib, inputs, dataDir, self, user, ... }: {
 
   imports = [
     # ── ISO 专用模块 ─────────────────────────────────
@@ -21,8 +21,8 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs dataDir; };
-    users.master = {
+    extraSpecialArgs = { inherit inputs dataDir self user; };
+    users.${user} = {
       imports = [ ../home/shell.nix ../home/common.nix ];
     };
   };
@@ -48,7 +48,7 @@
   networking.usePredictableInterfaceNames = false;
   networking.interfaces.eth0.useDHCP = true;
 
-  services.getty.autologinUser = lib.mkForce "master";
+  services.getty.autologinUser = lib.mkForce ${user};
 
   # 局域网发现（avahi/mDNS）
   services.avahi = {

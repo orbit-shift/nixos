@@ -1,7 +1,7 @@
 # 开发服务器集群
 # 用途：日常开发 + K8s combo 节点
 # 特点：复用 server 完整配置，挂载数据盘，额外 SSH 密钥
-{ dataDir }:
+{ dataDir, user }:
 {
   # ── 集群级配置 ────────────────────────────────────────
   runtime = "containerd";  # 容器运行时：crio / containerd
@@ -56,8 +56,8 @@
 
       # ── 额外 SSH 公钥 ────────────────────────────────────
       # 允许特定密钥免密登录（格式：ssh-ed25519/ssh-rsa + 公钥 + 注释）
-      users.users.master.openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAzNo0nUZQcEZBIubufcp0cC2x56Giul8iif1iWDRySb master@dx"
+      users.users.${user}.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAzNo0nUZQcEZBIubufcp0cC2x56Giul8iif1iWDRySb ${user}@dx"
       ];
 
       # ── 节点特有 API Server SANs ─────────────────────────

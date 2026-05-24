@@ -1,6 +1,6 @@
 # K8s 节点构建工具函数
 # 集中管理角色模块映射和节点生成逻辑
-{ nixpkgs, inputs, dataDir }:
+{ nixpkgs, inputs, dataDir, user, email }:
 let
   lib = nixpkgs.lib;
 
@@ -108,7 +108,7 @@ let
       }
     ];
   in lib.nixosSystem {
-    specialArgs = { inherit inputs dataDir cni0IP; };
+    specialArgs = { inherit inputs dataDir user email cni0IP; };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
       ../../hosts/k8s-role.nix

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }: {
+{ config, pkgs, lib, inputs, user, ... }: {
   imports = [
     ../common.nix
     ../shell.nix
@@ -7,8 +7,8 @@
   ];
 
   home = {
-    username = "master";
-    homeDirectory = "/home/master";
+    username = "${user}";
+    homeDirectory = "/home/${user}";
   };
 
   # 让 home-manager 自己管理自己

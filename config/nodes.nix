@@ -23,7 +23,7 @@
 let
   # 各集群定义（运行时 + 节点列表）
   clusters = {
-    dev           = import ./nodes/dev.nix { inherit dataDir; };
+    dev           = import ./nodes/dev.nix { inherit user dataDir; };
     smallCluster  = import ./nodes/small-cluster.nix;
     largeCluster  = import ./nodes/large-cluster.nix;
   };

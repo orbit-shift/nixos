@@ -1,5 +1,5 @@
 # Kubernetes 通用配置（CRI-O / Containerd 公共部分）
-{ pkgs, lib, config, cni0IP, ... }: {
+{ pkgs, lib, config, cni0IP, user, ... }: {
   # ── 声明容器运行时选项（必须由 k8s-lib.nix 显式设置） ──
   options.services.kubernetes.runtime = lib.mkOption {
     type = lib.types.enum [ "crio" "containerd" ];
@@ -133,7 +133,7 @@
 
       SECRETS_DIR="/var/lib/kubernetes/secrets"
       THRESHOLD_DAYS=30
-      CONFIG_DIR="/home/master/nixos"
+      CONFIG_DIR="/home/${user}/nixos"
 
       # 检查是否存在证书目录
       [ -d "$SECRETS_DIR" ] || exit 0

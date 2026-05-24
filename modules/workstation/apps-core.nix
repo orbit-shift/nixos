@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }: {
+{ pkgs, lib, config, dataDir, user, ... }: {
 
   # wireshark 组 + dumpcap capability
   # 自动将所有 normal users 加入 wireshark 组
@@ -20,8 +20,19 @@
     # neovide         # neovim GUI 前端
     zed-editor
 
+    # 媒体播放
+    nomacs
+    qimgv
+    mpv
+    ffmpeg
+
     # 浏览器
-    vivaldi
+    (pkgs.vivaldi.overrideAttrs (old: {
+      src = builtins.path {
+        path = "/home/${user}/pub/Application/Linux/vivaldi-stable_8.0.4033.34-1_amd64.deb";
+        name = "vivaldi-stable_8.0.4033.34-1_amd64.deb";
+      };
+    }))
     firefox
     chromium
     qutebrowser
@@ -41,10 +52,10 @@
   environment.defaultPackages = [];
 
   nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (pkg.pname or "") [
-
-      "vivaldi"
-    ];
+      builtins.elem (pkg.pname or "") [
+        "freefilesync"
+        "vivaldi"
+      ];
 
   environment.variables = {
     EDITOR = "hx";

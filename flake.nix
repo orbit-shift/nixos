@@ -45,6 +45,7 @@
     # ── 统一变量定义 ─────────────────────────────────────
     # 集中管理用户名，dataDir 和 home-manager 自动跟随
     user = "master";
+    email = "nash@iffy.me";
     dataDir = "/home/${user}/data";
 
     # ── K8s 节点定义（展平 clusters，自动注入 runtime 和 masterIP） ──
@@ -52,13 +53,13 @@
     k8sNodes = k8sLib.flattenClusters k8sConfig.clusters;
 
     # ── K8s 节点构建工具 ─────────────────────────────────────
-    k8sLib = import ./modules/server/k8s-lib.nix { inherit nixpkgs inputs dataDir; };
+    k8sLib = import ./modules/server/k8s-lib.nix { inherit nixpkgs inputs dataDir user email; };
     mkK8sNode = k8sLib.mkK8sNode;
   in {
     nixosConfigurations = (nixpkgs.lib.mapAttrs mkK8sNode k8sNodes) // {
 
       workstation = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs dataDir; };
+        specialArgs = { inherit inputs dataDir user email; };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/workstation
@@ -67,7 +68,7 @@
             home-manager = {
               useGlobalPkgs = true;    # 用系统的 nixpkgs，避免二次求值
               useUserPackages = true;  # home 包装进系统 profile
-              extraSpecialArgs = { inherit inputs dataDir; };
+              extraSpecialArgs = { inherit inputs dataDir user email; };
               users.${user} = import ./modules/home/workstation;
             };
           }
@@ -75,7 +76,7 @@
       };
 
       server = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs dataDir; };
+        specialArgs = { inherit inputs dataDir user email; };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/server
@@ -85,7 +86,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit inputs dataDir; };
+              extraSpecialArgs = { inherit inputs dataDir user email; };
               users.${user} = import ./modules/home/server;
             };
           }
@@ -93,7 +94,7 @@
       };
 
       qemu = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs dataDir; };
+        specialArgs = { inherit inputs dataDir user email; };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/qemu
@@ -103,7 +104,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit inputs dataDir; };
+              extraSpecialArgs = { inherit inputs dataDir user email; };
               users.${user} = import ./modules/home/workstation;
             };
           }
@@ -111,7 +112,7 @@
       };
 
       portable = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs dataDir; };
+        specialArgs = { inherit inputs dataDir user email; };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
           ./hosts/portable
@@ -120,7 +121,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit inputs dataDir; };
+              extraSpecialArgs = { inherit inputs dataDir user email; };
               users.${user} = {
                 imports = [ ./modules/home/shell.nix ./modules/home/common.nix ];
               };
