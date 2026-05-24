@@ -14,7 +14,7 @@
     fontconfig = {
       enable = true;
       # hinting, antialias, rgba removed in newer nixpkgs;
-      # use environment.etc for custom rules below.
+      # using fonts.fontconfig.localConf below instead.
       # ── 默认字体映射 ─────────────────────────────
       defaultFonts = {
         monospace = [ "Lilex" "MonaspiceAr" "Noto Sans Mono CJK SC" ];
@@ -24,6 +24,23 @@
     };
   };
 
-  # Custom fontconfig rules (was fonts.fontconfig.conf/hinting/rgba, removed in newer nixpkgs)
-  environment.etc."fonts/conf.d/99-custom-rendering.conf".source = ./assets/99-custom-rendering.conf;
+  # Custom fontconfig rules (antialias, hintslight, lcddefault, rgb)
+  fonts.fontconfig.localConf = ''
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+    <fontconfig>
+      <match target="font">
+        <edit name="antialias" mode="assign"><bool>true</bool></edit>
+      </match>
+      <match target="font">
+        <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
+      </match>
+      <match target="font">
+        <edit name="lcdfilter" mode="assign"><const>lcddefault</const></edit>
+      </match>
+      <match target="font">
+        <edit name="rgba" mode="assign"><const>rgb</const></edit>
+      </match>
+    </fontconfig>
+  '';
 }
