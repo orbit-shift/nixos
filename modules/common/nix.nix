@@ -14,6 +14,9 @@
     builders-use-substitutes = true;
   };
 
+  # ── D-Bus compliance diagnostics ──
+  imports = [ ../../lib/dbus-compliance.nix ];
+
   # 每周自动清理未使用的包
   nix.gc = {
     automatic = lib.mkDefault true;

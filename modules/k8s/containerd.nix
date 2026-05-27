@@ -10,8 +10,8 @@ in {
   # 注意：containerd 自己创建 socket，需用 ExecStartPost 修改权限
   users.groups.containerd = {};
   systemd.services.containerd.serviceConfig.ExecStartPost = ''
-    ${pkgs.coreutils}/bin/chgrp containerd /run/containerd/containerd.sock
-    ${pkgs.coreutils}/bin/chmod 660 /run/containerd/containerd.sock
+    ${pkgs.coreutils}/bin/chgrp containerd /run/containerd/containerd.sock \
+    ; ${pkgs.coreutils}/bin/chmod 660 /run/containerd/containerd.sock
   '';
   # 自动将所有 normal users 加入 containerd 组
   # 注意：不能直接读 config.users.users 再写 users.users（会无限递归）
