@@ -1,9 +1,9 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, nushellSrc, nushellGitUrl, ... }:
 
 let
   cfg = config.programs.nushell;
   nushellDir = "${config.home.homeDirectory}/Configuration/nushell";
-  nushellInput = inputs.my-nushell-src;
+  nushellInput = nushellSrc;
 in
 {
   options.programs.nushell.developMode = lib.mkEnableOption
@@ -27,11 +27,11 @@ in
     }
     # 始终启用 nushell + 插件 (polars / query web)
     # 注：插件放入 home.packages 而非 programs.nushell.plugins，避免与整目录 symlink 冲突
-    # {
+    {
     #   xdg.enable = true;
-    #   programs.nushell.enable = true;
-    #   programs.nushell.plugins = [ pkgs.nushellPlugins.polars pkgs.nushellPlugins.query ];
-    # }
+      programs.nushell.enable = true;
+      programs.nushell.plugins = [ pkgs.nushellPlugins.polars pkgs.nushellPlugins.query ];
+    }
 
     # 工作站开发模式：符号链接 + 自动克隆
     (lib.mkIf cfg.developMode {
@@ -44,7 +44,7 @@ in
       # 自动克隆仓库（如果尚未存在）
       home.activation.cloneNushellConfig = ''
         if [ ! -d "${nushellDir}/.git" ]; then
-          $DRY_RUN_CMD git clone https://github.com/fj0r/nushell.git "${nushellDir}"
+          $DRY_RUN_CMD git clone ${nushellGitUrl} "${nushellDir}"
         fi
       '';
     })
