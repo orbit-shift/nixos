@@ -19,6 +19,7 @@
 
     # ── 工作站桌面与应用模块 (使 portable 具备完整 GUI 和工具链) ──
     ../../modules/gui/desktop.nix
+    ../../modules/gui/accessibility.nix    # 禁用无障碍语音播报
     ../../modules/gui/apps-core.nix
     # # ../../modules/gui/apps-im.nix
     # ../../modules/gui/apps-extra.nix

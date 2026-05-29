@@ -17,6 +17,7 @@
 
     ../../modules/gui/desktop.nix
     ../../modules/gui/laptop.nix
+    ../../modules/gui/accessibility.nix    # 禁用无障碍语音播报
     ../../modules/gui/apps-core.nix
     ../../modules/gui/apps-extra.nix
     ../../modules/common/vm.nix            # libvirtd/virt-manager 虚拟机支持
@@ -24,6 +25,7 @@
     ../../modules/dev
     ../../modules/podman/mihomo.nix        # 代理容器
     ../../modules/podman/gitea.nix         # Gitea + PostgreSQL
+    ../../modules/podman/miniflux.nix      # Miniflux RSS + PostgreSQL
     ../../modules/flake-srv/hermes.nix     # Hermes Agent gateway
     ../../modules/gui/apps-im.nix        # 即时通讯
   ];

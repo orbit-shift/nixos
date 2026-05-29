@@ -2,6 +2,26 @@
 
 let
   localPkg = import ../../lib/local-pkg.nix { inherit pkgs user; };
+
+  # ── Vivaldi：Wayland IME 修复 ──────────────────────────
+  # symlinkJoin + wrapProgram 会因符号链接导致 "not an executable file" 错误
+  # 改用 writeShellScriptBin 创建包装脚本
+  vivaldiWrapped = pkgs.writeShellScriptBin "vivaldi" ''
+    exec ${
+      localPkg { pkg = pkgs.vivaldi; filename = "vivaldi-stable_8.0.4033.34-1_amd64.deb"; }
+    }/bin/vivaldi \
+      --enable-wayland-ime \
+      --ozone-platform-hint=auto \
+      "$@"
+  '';
+
+  # ── Zed Editor：XWayland 兼容层启动，杜绝失焦闪退 ─────
+  zedWrapped = pkgs.writeShellScriptBin "zed" ''
+    export WAYLAND_DISPLAY=""
+    export XMODIFIERS="@im=fcitx"
+    export GTK_IM_MODULE="fcitx"
+    exec ${pkgs.zed-editor}/bin/zed "$@"
+  '';
 in {
 
   # wireshark 组 + dumpcap capability
@@ -22,7 +42,7 @@ in {
     # 编辑器
     # neovim
     # neovide         # neovim GUI 前端
-    zed-editor
+    zedWrapped        # XWayland 包装版（带 fcitx 兼容层）
 
     # 媒体播放
     nomacs
@@ -34,17 +54,7 @@ in {
     firefox
     chromium
     qutebrowser
-    # Vivaldi 缩放修复：本地 .deb + 强制 1:1 像素渲染
-    # (localPkg { pkg = pkgs.vivaldi; filename = "vivaldi-stable_8.0.4033.34-1_amd64.deb"; })
-    ((localPkg { pkg = pkgs.vivaldi; filename = "vivaldi-stable_8.0.4033.34-1_amd64.deb"; }).overrideAttrs (old: {
-      postFixup = (old.postFixup or "") + ''
-        wrapProgram "$out/bin/vivaldi" \
-          --add-flags "--force-device-scale-factor=1" \
-          --add-flags "--enable-features=UseOzonePlatform" \
-          --add-flags "--ozone-platform=wayland" \
-          --add-flags "--ozone-platform-hint=auto"
-      '';
-    }))
+    vivaldiWrapped    # Wayland IME 包装版
 
     # 文件 & 办公
     freefilesync
@@ -56,11 +66,6 @@ in {
     # 桌面通知
     libnotify
   ];
-
-  # Chromium 内核浏览器（Vivaldi/Chromium）Wayland 渲染配置：
-  # 强制 Wayland 原生渲染 + 固定缩放因子 1.0。
-  # 不添加 --enable-wayland-ime，因为 waylandFrontend = true 已自动处理文本输入协议。
-  nixpkgs.config.chromium.commandLineArgs = "--enable-features=UseOzonePlatform --ozone-platform=wayland --force-device-scale-factor=1";
 
   # programs.gparted.enable removed in newer nixpkgs; gparted still in environment.systemPackages
 

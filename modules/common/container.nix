@@ -16,12 +16,12 @@ in {
   };
 
 
-  # Podman storage 配置（路径放在 /root 下）
+  # Podman storage 配置（系统级多用户共享路径，与 Containerd 隔离避免锁冲突）
   environment.etc."containers/storage.conf".text = lib.mkForce ''
     [storage]
     driver = "overlay"
-    runroot = "/root/.local/share/containers/storage/runroot"
-    graphroot = "/root/.local/share/containers/storage"
+    runroot = "/run/containers/storage"
+    graphroot = "/var/lib/containers/storage"
   '';
   # ── Container Image Tools（仅在 podman 启用时安装）────
   environment.systemPackages = lib.mkIf config.virtualisation.podman.enable (with pkgs; [
