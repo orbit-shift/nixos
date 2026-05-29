@@ -31,7 +31,7 @@
   services.displayManager.cosmic-greeter.enable = false;
 
   # 启用完整开发工具链
-  dev.enable = true;
+  # dev.enable = true;
 
   networking.hostName = "workstation";
 }

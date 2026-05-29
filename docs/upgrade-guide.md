@@ -154,8 +154,8 @@ EOF'
 ```bash
 # 1. 挂载 XFS 根分区和 vfat 引导分区
 #    用 lsblk 确认实际设备号，例如 nvme0n1p2 和 nvme0n1p1
-sudo mount /dev/nvme0n1p2 /mnt
-sudo mount /dev/nvme0n1p1 /mnt/boot
+sudo mount /dev/nvme0n1p1 /mnt
+sudo mount /dev/nvme0n1p2 /mnt/boot
 
 # 2. 保护引导：将 vfat 分区内的 EFI 目录改名，随后立即解挂载
 sudo mv /mnt/boot/EFI /mnt/boot/EFI.arch
@@ -170,7 +170,7 @@ sudo mv -v bin etc home lib lib64 opt root sbin usr var .arch_bak/
 此时 `/mnt` 根目录已干净（仅剩 `.arch_bak` 和空 `boot` 目录）。现在可以重新挂载 vfat 到 `/mnt/boot`，然后执行 `nixos-install`，**切记不要格式化**。
 
 ```bash
-sudo mount /dev/nvme0n1p1 /mnt/boot
+sudo mount /dev/nvme0n1p2 /mnt/boot
 # 执行 nixos-install ...
 ```
 

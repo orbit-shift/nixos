@@ -12,13 +12,11 @@
     surrealist        # SurrealDB GUI 客户端
 
 
-    onlyoffice-bin        # 已从 nixpkgs 移除，可替换为 libreoffice 或 onlyoffice-bin
+    onlyoffice-desktopeditors
     zathura         # PDF 阅读
 
     foliate         # 电子书阅读
 
-    wechat      # 微信
-    feishu      # 飞书
     # 以下按需取消注释：
     # lapce
     # bruno           # API 客户端
