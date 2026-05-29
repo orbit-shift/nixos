@@ -22,7 +22,7 @@
     ../../modules/gui/apps-core.nix
     # # ../../modules/gui/apps-im.nix
     # ../../modules/gui/apps-extra.nix
-    ../../modules/dev
+    # ../../modules/dev
     # 注意：不包含 laptop.nix，避免在非笔记本硬件上报错
     ../../modules/common/vm.nix
     ../../modules/podman/mihomo.nix        # 代理容器

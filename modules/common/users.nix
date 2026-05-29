@@ -2,14 +2,14 @@
   users.users.${user} = {
     isNormalUser = true;
     shell = pkgs.bash;
-    # 密码 mkpasswd -m yescrypt "qwer"
-    hashedPassword = "$y$j9T$eHkiXr76s0VRdWQo5DZm5/$pPYnU83oUkbQ8xcYjo6n8jvBxNevWZRoR/5PyQdpnF1";
+    # mkpasswd -m yescrypt "qwer"
+    hashedPassword = "$y$j9T$hSonE3YWKoH$y$j9T$K6.dofzliwDGxsZ1jgRrf.$BeExKPCaux5Irn16Jt.MBPMjIghzaEPls1D95f3/VL/";
     extraGroups = [
       "wheel"
       "lp"
       "podman"
     ];
-    # 把你的 SSH 公钥放这里
+    # SSH pubkey
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK2Q46WeaBZ9aBkS3TF2n9laj1spUkpux/zObmliHUOI"
     ];

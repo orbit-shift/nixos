@@ -11,11 +11,7 @@
     ./databases.nix
   ];
 
-  options.dev = {
-    enable = lib.mkEnableOption "启用所有开发工具链（语言、K8s、数据工具等）";
-  };
-
-  config = lib.mkIf config.dev.enable {
+  config = {
     dev.javascript.enable = lib.mkDefault true;
     dev.python.enable = lib.mkDefault true;
     dev.rust.enable = lib.mkDefault true;
