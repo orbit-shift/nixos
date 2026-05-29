@@ -1,6 +1,10 @@
 export module workstation {
-    export def rebuild [] {
-        sudo nixos-rebuild switch --flake .#workstation --impure e+o>| nom
+    export def rebuild [--nom(-n)] {
+        if $nom {
+            sudo nixos-rebuild switch --flake .#workstation --impure e+o>| nom
+        } else {
+            sudo nixos-rebuild switch --flake .#workstation --impure
+        }
     }
 }
 

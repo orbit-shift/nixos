@@ -130,7 +130,11 @@
               useUserPackages = true;
               extraSpecialArgs = commonArgs;
               users.${user} = {
-                imports = [ ./modules/home/shell.nix ./modules/home/common.nix ];
+                imports = [
+                  ./modules/home/workstation
+                  # ./modules/home/shell.nix
+                  # ./modules/home/common.nix
+                ];
               };
             };
           }

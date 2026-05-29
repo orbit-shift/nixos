@@ -1,7 +1,15 @@
-{ pkgs, lib, dataDir, ... }: {
+{ pkgs, lib, dataDir, ... }:
+
+let
+  # 隔离输入法环境变量，防止 cosmic-greeter 尝试激活 fcitx5 导致锁屏卡死
+  greeterCmd = "env -u GTK_IM_MODULE -u QT_IM_MODULE -u XMODIFIERS -u INPUT_METHOD -u SDL_IM_MODULE cosmic-greeter";
+in {
   # ── COSMIC Desktop Environment ─────────────────────────
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = lib.mkDefault true;
+
+  # 登录/锁屏界面必须绝对干净，禁止加载任何输入法代理，防止密码框卡死
+  services.greetd.settings.default_session.command = lib.mkForce greeterCmd;
 
   # ── Pipewire Audio ─────────────────────────────────────
   services.pipewire = {

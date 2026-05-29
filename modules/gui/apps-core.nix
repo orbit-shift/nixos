@@ -57,8 +57,9 @@ in {
     libnotify
   ];
 
-  # Chromium 内核浏览器（Vivaldi/Chromium）HiDPI 修复：
-  # 强制 Wayland 原生渲染 + 固定缩放因子 1.0，忽略 compositor 报告的缩放
+  # Chromium 内核浏览器（Vivaldi/Chromium）Wayland 渲染配置：
+  # 强制 Wayland 原生渲染 + 固定缩放因子 1.0。
+  # 不添加 --enable-wayland-ime，因为 waylandFrontend = true 已自动处理文本输入协议。
   nixpkgs.config.chromium.commandLineArgs = "--enable-features=UseOzonePlatform --ozone-platform=wayland --force-device-scale-factor=1";
 
   # programs.gparted.enable removed in newer nixpkgs; gparted still in environment.systemPackages
