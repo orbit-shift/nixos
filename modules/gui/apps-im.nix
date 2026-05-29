@@ -1,7 +1,11 @@
-{ pkgs, ... }: {
+{ pkgs, user, ... }:
+
+let
+  localPkg = import ../../lib/local-pkg.nix { inherit pkgs user; };
+in {
   environment.systemPackages = with pkgs; [
     telegram-desktop
-    wechat # nix-community 维护的 wechat-uos
+    # (localPkg { pkg = wechat; filename = "WeChatLinux_x86_64.AppImage"; })
     feishu
   ];
 

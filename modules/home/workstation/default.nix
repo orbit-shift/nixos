@@ -6,6 +6,7 @@
     ../terminals.nix
     ../git.nix
     ../xdg.nix
+    ../rime.nix
   ];
 
   home = {

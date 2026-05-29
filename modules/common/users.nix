@@ -3,7 +3,7 @@
     isNormalUser = true;
     shell = pkgs.bash;
     # mkpasswd -m yescrypt "qwer"
-    hashedPassword = "$y$j9T$hSonE3YWKoH$y$j9T$K6.dofzliwDGxsZ1jgRrf.$BeExKPCaux5Irn16Jt.MBPMjIghzaEPls1D95f3/VL/";
+    hashedPassword = "$y$j9T$LuChS39drFFK0G9w05zzW1$ni887.E/FpNqKVqlAimC5uAUrtcytrZwgHhw7280fN0";
     extraGroups = [
       "wheel"
       "lp"

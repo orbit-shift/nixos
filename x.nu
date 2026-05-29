@@ -1,3 +1,9 @@
+export module workstation {
+    export def rebuild [] {
+        sudo nixos-rebuild switch --flake .#workstation --impure e+o>| nom
+    }
+}
+
 export module portable {
     export def mount-btrfs [
         --root(-r): string = "/dev/disk/by-uuid/3f9631a2-51ab-448a-9ac2-3b475fde7458"

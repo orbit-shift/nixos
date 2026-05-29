@@ -75,6 +75,7 @@
               useGlobalPkgs = true;    # 用系统的 nixpkgs，避免二次求值
               useUserPackages = true;  # home 包装进系统 profile
               extraSpecialArgs = commonArgs;
+              backupFileExtension = "hm-backup";
               users.${user} = import ./modules/home/workstation;
             };
           }
