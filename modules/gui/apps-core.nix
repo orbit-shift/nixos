@@ -1,28 +1,6 @@
-{ pkgs, lib, config, dataDir, user, ... }:
+{ pkgs, lib, config, ... }:
 
-let
-  localPkg = import ../../lib/local-pkg.nix { inherit pkgs user; };
-
-  # ── Vivaldi：Wayland IME 修复 ──────────────────────────
-  # symlinkJoin + wrapProgram 会因符号链接导致 "not an executable file" 错误
-  # 改用 writeShellScriptBin 创建包装脚本
-  vivaldiWrapped = pkgs.writeShellScriptBin "vivaldi" ''
-    exec ${
-      localPkg { pkg = pkgs.vivaldi; filename = "vivaldi-stable_8.0.4033.34-1_amd64.deb"; }
-    }/bin/vivaldi \
-      --enable-wayland-ime \
-      --ozone-platform-hint=auto \
-      "$@"
-  '';
-
-  # ── Zed Editor：XWayland 兼容层启动，杜绝失焦闪退 ─────
-  zedWrapped = pkgs.writeShellScriptBin "zed" ''
-    export WAYLAND_DISPLAY=""
-    export XMODIFIERS="@im=fcitx"
-    export GTK_IM_MODULE="fcitx"
-    exec ${pkgs.zed-editor}/bin/zed "$@"
-  '';
-in {
+{
 
   # wireshark 组 + dumpcap capability
   # 自动将所有 normal users 加入 wireshark 组
@@ -34,15 +12,17 @@ in {
     lib.filterAttrs (name: user: user.isNormalUser or false) config.users.users
   );
 
+  imports = [
+    ./vivaldi.nix          # 浏览器：Vivaldi + Chromium + 缩放修复
+    ./zed.nix              # 编辑器：Zed + IME 修复
+  ];
+
   environment.systemPackages = with pkgs; [
     # Shell & 终端
     ghostty
     alacritty       # 备用终端
 
-    # 编辑器
-    # neovim
-    # neovide         # neovim GUI 前端
-    zedWrapped        # XWayland 包装版（带 fcitx 兼容层）
+    # 编辑器（已移至 zed.nix）
 
     # 媒体播放
     nomacs
@@ -54,7 +34,6 @@ in {
     firefox
     chromium
     qutebrowser
-    vivaldiWrapped    # Wayland IME 包装版
 
     # 文件 & 办公
     freefilesync
@@ -75,7 +54,6 @@ in {
   nixpkgs.config.allowUnfreePredicate = pkg:
       builtins.elem (pkg.pname or "") [
         "freefilesync"
-        "vivaldi"
       ];
 
   environment.variables = {
