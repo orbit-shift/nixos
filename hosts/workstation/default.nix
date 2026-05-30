@@ -27,7 +27,6 @@
   };
 
   wayland.windowManager.hyprland.enable = true;
-  services.displayManager.cosmic-greeter.enable = true;
 
   networking.hostName = "workstation";
 }
