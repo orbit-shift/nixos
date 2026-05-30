@@ -2,6 +2,7 @@
 #
 # 角色：同时运行控制平面组件和 kubelet，允许调度普通 Pod
 # 注意：combo 节点默认有 control-plane taint，k8s-libs.nix 会自动移除
+{ ... }:
 {
   # ── 集群级配置 ────────────────────────────────────────
   runtime = "containerd";  # 容器运行时：crio / containerd
@@ -10,24 +11,24 @@
 
   # ── 节点定义 ──────────────────────────────────────────
   nodes = {
-    k8s-combo-01 = {
-      hostname = "k8s-combo-01";
+    combo-01 = {
+      hostname = "combo-01";
       ip = "192.168.1.31";
       role = "combo";
       imports = [{
         fileSystems."/" = { device = "/dev/vda2"; fsType = "ext4"; autoResize = true; };
       }];
     };
-    k8s-worker-02 = {
-      hostname = "k8s-worker-01";
+    worker-02 = {
+      hostname = "worker-02";
       ip = "192.168.1.32";
       role = "worker";
       imports = [{
         fileSystems."/" = { device = "/dev/vda2"; fsType = "ext4"; autoResize = true; };
       }];
     };
-    k8s-worker-03 = {
-      hostname = "k8s-worker-02";
+    worker-03 = {
+      hostname = "worker-03";
       ip = "192.168.1.33";
       role = "worker";
       imports = [{

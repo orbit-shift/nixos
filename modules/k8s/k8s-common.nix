@@ -207,7 +207,7 @@
     "kubernetes.default"
     "kubernetes.default.svc"
     "kubernetes.default.svc.cluster.local"
-    (cni0IP config.services.kubernetes.podCIDR)
+    cni0IP
   ];
 
   # 监听所有网络接口，允许远程访问

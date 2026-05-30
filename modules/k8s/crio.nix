@@ -1,13 +1,6 @@
 # CRI-O 容器运行时配置
 { pkgs, lib, config, ... }:
-let
-  registriesData = import ../../config/registries.nix;
-
-  generateRegistriesConf = import ../../libs/registries-gen.nix {
-    inherit lib;
-    cfg = registriesData;
-  };
-in {
+{
   # ── 启用 CRI-O ──────────────────────────────────────────
   virtualisation.cri-o.enable = true;
 
@@ -44,6 +37,6 @@ in {
     '';
   };
 
-  # ── 容器镜像仓库配置（/etc/containers/registries.conf）──
-  environment.etc."containers/registries.conf".text = lib.mkForce generateRegistriesConf;
+  # ── 容器镜像仓库配置已移至集群级配置 ───────────────────
+  # environment.etc."containers/registries.conf".text = lib.mkForce generateRegistriesConf;
 }

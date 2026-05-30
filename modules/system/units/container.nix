@@ -1,11 +1,9 @@
+# 容器通用配置（Podman + 存储）
 { pkgs, lib, config, ... }:
-let
-  registriesData = import ../../../config/registries.nix;
-in {
+{
   # ── 容器镜像仓库配置（/etc/containers/registries.conf）──
-  environment.etc."containers/registries.conf".text = lib.mkForce (
-    import ../../../libs/registries-gen.nix { inherit lib; cfg = registriesData; }
-  );
+  # Registries config moved to cluster-specific configuration.
+  # environment.etc."containers/registries.conf".text = ...;
 
   # ── Podman ───────────────────────────────────────────────
   virtualisation.podman = {

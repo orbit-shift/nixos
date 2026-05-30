@@ -1,7 +1,7 @@
 # Containerd 容器运行时配置
 { config, lib, pkgs, ... }:
 let
-  registriesData = import ../../config/registries.nix;
+  # registriesData is now cluster-specific; handled by host configuration.
   containerdRegistryDir = "/etc/containerd/certs.d";
 in {
   # ── 启用 Containerd ─────────────────────────────────────
@@ -36,33 +36,9 @@ in {
   ];
 
   # ── Containerd 运行时设置 ───────────────────────────────
-  # 生成 hosts.toml 文件（containerd v2 新格式）
-
-  # 为每个代理镜像生成 hosts.toml
-  environment.etc = lib.mapAttrs' (prefix: location: {
-    name = "containerd/certs.d/${prefix}/hosts.toml";
-    value = {
-      text = ''
-        server = "https://${prefix}"
-
-        [host."https://${location}"]
-          capabilities = ["pull", "resolve"]
-      '';
-    };
-  }) registriesData.proxyRegistries //
-  # 为每个非安全镜像生成 hosts.toml（使用 HTTP）
-  lib.listToAttrs (map (loc: {
-    name = "containerd/certs.d/${loc}/hosts.toml";
-    value = {
-      text = ''
-        server = "http://${loc}"
-
-        [host."http://${loc}"]
-          capabilities = ["pull", "resolve"]
-      '';
-    };
-  }) registriesData.insecureRegistries);
-
+  # ── 镜像仓库配置（containerd v2 新格式：config_path）──
+  # CRI 插件必须显式指定 config_path 才能读取 hosts.toml
+  # Hosts toml generation moved to cluster-specific config.
   virtualisation.containerd.settings = {
     plugins."io.containerd.grpc.v1.cri" = {
       sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.9";

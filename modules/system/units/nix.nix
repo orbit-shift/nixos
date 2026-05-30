@@ -53,4 +53,8 @@
     nix-diff                      # 对比 closures 差异
     nix-index                     # 按文件名搜索包（nix-locate）
   ];
+
+  # 修复 nh 等工具调用 sudo 时权限不足的问题
+  # 强制指向系统提供的带 setuid 的 wrapper，而不是 store 里的原始二进制
+  environment.sessionVariables.SUDO = "/run/wrappers/bin/sudo";
 }

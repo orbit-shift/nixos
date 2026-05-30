@@ -2,8 +2,7 @@
   description = "My NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";       # 全局默认（工作站 / 服务器 / 所有 K8s 节点）
-    # nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";   # [备用] 稳定分支 (当前未使用，保留以备特定主机降级需求)
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
@@ -19,19 +18,11 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # disko-stable = {
-    #   url = "github:nix-community/disko";
-    #   inputs.nixpkgs.follows = "nixpkgs-stable";  # [备用] 稳定版 disko，配合 nixpkgs-stable 使用
-    # };
 
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # home-manager-stable = {
-    #   url = "github:nix-community/home-manager/release-25.11";
-    #   inputs.nixpkgs.follows = "nixpkgs-stable";  # [备用] 稳定版 home-manager，配合 nixpkgs-stable 使用
-    # };
 
     my-nushell-src = {
       url = "github:fj0r/nushell";
@@ -39,7 +30,6 @@
     };
   };
 
-  # outputs 函数参数包含所有输入源（stable 系列已注释，目前仅使用 unstable）
   outputs = { self, nixpkgs, nixos-anywhere, nix2container, disko, home-manager, my-nushell-src, ... }@inputs:
   let
     # ── 统一变量定义 ─────────────────────────────────────
@@ -58,54 +48,34 @@
       nushellLocalPath = "/home/${user}/Configuration/nushell";
     };
 
-    # ── K8s 节点定义（展平 clusters，自动注入 runtime 和 masterIP） ──
-    k8sConfig = import ./config/nodes.nix { inherit user dataDir; };
-    k8sNodes = k8sLib.flattenClusters k8sConfig.clusters;
+    # ── 通用构建器 ─────────────────────────────────────
+    mkNode = import ./libs/nixos-builder.nix { inherit nixpkgs commonArgs homeManagerInput; };
 
-    # ── 统一构建函数：集成 NixOS + Home Manager ──
-    mkNixos = import ./libs/nixos-builder.nix { inherit nixpkgs commonArgs homeManagerInput; };
-
-    # ── K8s 节点构建工具 ─────────────────────────────────────
+    # ── K8s 工具库 ─────────────────────────────────────
     k8sLib = import ./modules/k8s/k8s-libs.nix { inherit nixpkgs inputs commonArgs; };
-    mkK8sNode = k8sLib.mkK8sNode;
+
+    # ── 自动发现逻辑 ─────────────────────────────────────
+    domains = builtins.attrNames (builtins.readDir ./hosts);
+
+    processDomain = domainName:
+      let
+        # 导入域定义文件，单独注入 lib（不污染 commonArgs）
+        domainDef = import ./hosts/${domainName} (commonArgs // { inherit (nixpkgs) lib; });
+        # 判断是否为集群模式 (包含 nodes 属性)
+        nodes = if builtins.hasAttr "nodes" domainDef
+          then k8sLib.expandCluster domainName domainDef
+          else domainDef;
+      in
+      # 统一映射构建，输出 key 为 domain_nodeName（域名=节点名时简化为单名）
+      nixpkgs.lib.mapAttrs' (nodeName: nodeConfig:
+        let systemName = if domainName == nodeName then nodeName else "${domainName}_${nodeName}";
+        in nixpkgs.lib.nameValuePair systemName (mkNode ({ inherit nodeName domainName; } // nodeConfig))
+      ) nodes;
+
   in {
-    nixosConfigurations = (nixpkgs.lib.mapAttrs mkK8sNode k8sNodes) // {
-
-      workstation = mkNixos {
-        hostDir = ./hosts/workstation;
-      };
-
-      server = mkNixos {
-        hostDir = ./hosts/server;
-        hostName = "server";
-      };
-
-      qemu = mkNixos {
-        hostDir = ./hosts/qemu;
-      };
-
-      portable = mkNixos {
-        hostDir = ./hosts/portable;
-      };
-
-      # ── ISO 配置（已归档至 modules/iso/default.nix，默认注释掉以防体积报错） ──
-      # 如需重新启用：
-      # 1. 取消注释下方代码
-      # 2. 确保 cache.nix 中的包体积总和小于 2.5GB（或修改构建器支持更大体积）
-      #
-      # iso = nixpkgs.lib.nixosSystem {
-      #   specialArgs = { inherit inputs dataDir; self = ./.; };
-      #   modules = [
-      #     { nixpkgs.hostPlatform = "x86_64-linux"; }
-      #     ./modules/iso
-      #   ];
-      # };
-
-    };
-
-    # 自定义 ISO 构建：nix build .#iso
-    # 使用 nixpkgs 原生 system.build.image（NixOS 25.05+）
-    # 注意：需先取消注释上方的 iso 主机配置
-    # packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.image;
+    # 合并所有域生成的 nixosConfigurations
+    nixosConfigurations = builtins.foldl' (acc: domainName:
+      acc // (processDomain domainName)
+    ) {} domains;
   };
 }
