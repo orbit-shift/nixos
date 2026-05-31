@@ -9,7 +9,7 @@ let
 
   # 剥离构建器专用字段，剩余的视为 NixOS 配置选项
   # 这些选项将被转换为一个匿名模块并注入模块栈，从而应用 networking.hostName 等配置
-  builderKeys = [ "nodeName" "domainName" "imports" "ip" "user" "cni0IP" "isK8sNode" "k8sRole" "runtime" "podCIDR" "masterIP" ];
+  builderKeys = [ "nodeName" "domainName" "imports" "ip" "user" "cni0IP" "isK8sNode" "k8sRole" "runtime" "podCIDR" "masterIP" "hostname" ];
   nodeConfigModule = lib.removeAttrs nodeAttrs builderKeys;
 
   # ── 基础模块栈 ───────────────────────────────────────
@@ -46,8 +46,13 @@ let
     }];
   };
 
+  # ── 条件注入：设置主机名 ────────────────────────────
+  hostnameModule = lib.optional (builtins.hasAttr "hostname" nodeAttrs) {
+    networking.hostName = nodeAttrs.hostname;
+  };
+
   # ── 合并模块 ─────────────────────────────────────────
-  finalModules = baseModules ++ networkModule ++ [ nodeConfigModule ] ++ (nodeAttrs.imports or []);
+  finalModules = baseModules ++ networkModule ++ hostnameModule ++ [ nodeConfigModule ] ++ (nodeAttrs.imports or []);
 
 in
 nixpkgs.lib.nixosSystem {

@@ -74,6 +74,7 @@ let
 
         # 节点特定属性
         ip = nodeAttrs.ip or (throw "k8s node '${nodeName}' missing 'ip'");
+        hostname = nodeAttrs.hostname;
 
         # 动态模块列表
         imports =

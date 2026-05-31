@@ -1,5 +1,9 @@
 # Kubernetes 通用配置（CRI-O / Containerd 公共部分）
 { pkgs, lib, config, cni0IP, user, ... }: {
+  imports = [
+    ../dev/server.nix
+  ];
+
   # ── 声明容器运行时选项（必须由 k8s-libs.nix 显式设置） ──
   options.services.kubernetes.runtime = lib.mkOption {
     type = lib.types.enum [ "crio" "containerd" ];
@@ -51,6 +55,11 @@
       "--max-pods=500"
     ];
   in {
+  # ── Home Manager：管理员调试（Nushell、git 等） ──────
+  home-manager.users.${user} = {
+    imports = [ ../home/headless.nix ];
+  };
+
   # ── 自动证书管理 + Flannel + Proxy ─────────────────────
   # roles 非空时会自动启用 easyCerts、flannel、proxy
   # 此处显式启用以确保

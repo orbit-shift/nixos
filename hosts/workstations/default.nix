@@ -8,7 +8,7 @@ in {
   # 成员：master
   "orbit" = {
     user = "master";
-    networking.hostName = "workstation";
+    hostname = "workstation";
     imports = [
       inputs.disko.nixosModules.disko
       baseRole
@@ -27,7 +27,7 @@ in {
   # 成员 1：Alice
   "team-alice" = {
     user = "alice";
-    networking.hostName = "alice-ws";
+    hostname = "alice-ws";
     imports = [
       inputs.disko.nixosModules.disko
       baseRole
@@ -38,7 +38,7 @@ in {
   # 成员 2：Bob
   "team-bob" = {
     user = "bob";
-    networking.hostName = "bob-ws";
+    hostname = "bob-ws";
     imports = [
       inputs.disko.nixosModules.disko
       baseRole

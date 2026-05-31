@@ -47,6 +47,7 @@ let
 
 in {
   environment.etc =
-    if runtime == "containerd" then containerdTomls
-    else { "containers/registries.conf".text = lib.mkForce registriesConf; };
+    (if runtime == "containerd" then containerdTomls else {}) //
+    # 始终生成 registries.conf（Podman/nerdctl 等工具需要此文件）
+    { "containers/registries.conf".text = lib.mkForce registriesConf; };
 }
