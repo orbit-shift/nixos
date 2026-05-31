@@ -50,7 +50,6 @@
 
     # ── Nix 调试与可视化 ──
     nix-tree                      # 可视化依赖树
-    nix-output-monitor            # 构建进度条（nom-build 代替 nix build）
     nix-diff                      # 对比 closures 差异
     nix-index                     # 按文件名搜索包（nix-locate）
   ];

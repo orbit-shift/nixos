@@ -1,14 +1,14 @@
 export module workstation {
-    export def rebuild [--nom(-n)] {
-        if $nom {
-            sudo nixos-rebuild switch --flake .#workstation --impure e+o>| nom
-        } else {
-            sudo nixos-rebuild switch --flake .#workstation --impure
-        }
+    export def rebuild [profile: string = 'orbit'] {
+        sudo nixos-rebuild switch --flake $".#workstations_($profile)" --impure
+    }
+
+    export def show [profile: string = 'orbit'] {
+        nh os build $".#workstations_($profile)"
     }
 
     export def update [] {
-        sudo nix flake update
+        nh flake update
     }
 
     export def check [] {
