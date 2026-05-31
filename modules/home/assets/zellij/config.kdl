@@ -2,6 +2,7 @@ default_shell "nu"
 simplified_ui true
 theme "gruvbox-dark"
 pane_frames false
+compact_bar true
 scrollback_editor "hx"
 
 keybinds clear-defaults=true {
