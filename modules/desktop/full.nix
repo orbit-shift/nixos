@@ -7,7 +7,6 @@
     ./units/cosmic.nix
     ./units/greetd.nix
     ./units/eww.nix
-    ./units/fcitx5.nix
     ./units/fonts.nix
     ./units/hyprland.nix
     ./units/input-method.nix
