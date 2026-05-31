@@ -7,6 +7,7 @@
     ./units/git.nix
     ./units/xdg.nix
     ./units/rime.nix
+    ./units/eww.nix
   ];
 
   home = {

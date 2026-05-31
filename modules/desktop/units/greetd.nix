@@ -6,60 +6,25 @@ let
   targetFile = "${targetDir}/wallpaper.jpg";
 in
 {
-  # 1. 关闭 regreet
-  # programs.regreet.enable = false; # 这一行去掉，改为下面配置 enable = true
+  # 1. 关闭 NixOS 默认的 regreet 管理，完全接管配置
+  programs.regreet.enable = false;
 
+  # 2. 部署自定义配置文件到 /etc/greetd
+  environment.etc."greetd/regreet.toml".source = ../assets/greetd/config.toml;
+  environment.etc."greetd/style.css".source = ../assets/greetd/style.css;
+
+  # 3. Greetd 设置
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.cage}/bin/cage -s -- ${pkgs.regreet}/bin/regreet";
+        command = "${pkgs.cage}/bin/cage -s -- ${pkgs.regreet}/bin/regreet --config /etc/greetd/regreet.toml --style /etc/greetd/style.css";
         user = "greeter";
       };
     };
   };
 
-  # 2. ReGreet 配置：背景 + 透明登录框
-  programs.regreet = {
-    enable = true;
-    settings = {
-      background = {
-        path = targetFile;
-        fit = "Cover";
-      };
-      GTK.application_prefer_dark_theme = true;
-      appearance = {
-        greeting_msg = ""; # 不要欢迎语，更简洁
-        show_clock = false; # 不要时钟
-      };
-    };
-    # 3. 极简透明 CSS
-    extraCss = ''
-      /* 让所有容器和卡片背景透明 */
-      window, .background, box, grid, .card, frame {
-        background: transparent !important;
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-      /* 输入框样式 */
-      entry {
-        background: rgba(255, 255, 255, 0.15) !important;
-        border-radius: 8px;
-        border: none;
-        padding: 10px;
-      }
-      entry:focus {
-        background: rgba(255, 255, 255, 0.25) !important;
-      }
-      label {
-        color: #ffffff;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      }
-    '';
-  };
-
-  # 4. 禁用 Keyring 避免弹窗
+  # 4. 禁用 Keyring
   services.gnome.gnome-keyring.enable = false;
 
   # 5. 壁纸服务

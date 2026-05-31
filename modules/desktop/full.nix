@@ -6,7 +6,6 @@
     ./units/apps-im.nix
     ./units/cosmic.nix
     ./units/greetd.nix
-    ./units/eww.nix
     ./units/fonts.nix
     ./units/hyprland.nix
     ./units/input-method.nix
