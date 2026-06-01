@@ -40,10 +40,10 @@
     ];
   };
 
-  # delta —— 更好看的 diff
+  # delta —— 更好看的 diff（不自动作为 git pager）
   programs.delta = {
     enable = true;
-    enableGitIntegration = true;
+    enableGitIntegration = false;
     options = {
       paging           = false;
       navigate         = true;

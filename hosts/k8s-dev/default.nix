@@ -20,6 +20,7 @@ in {
     dxserver = {
       hostname = "dxserver";
       ip = "172.178.5.123";
+      useDHCP = true;
       role = "combo";
       imports = [
         # 引用 dxserver 的物理硬件画像

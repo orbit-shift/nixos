@@ -9,7 +9,7 @@ let
 
   # 剥离构建器专用字段，剩余的视为 NixOS 配置选项
   # 这些选项将被转换为一个匿名模块并注入模块栈，从而应用 networking.hostName 等配置
-  builderKeys = [ "nodeName" "domainName" "imports" "ip" "user" "cni0IP" "isK8sNode" "k8sRole" "runtime" "podCIDR" "masterIP" "hostname" ];
+  builderKeys = [ "nodeName" "domainName" "imports" "ip" "user" "cni0IP" "isK8sNode" "k8sRole" "runtime" "podCIDR" "masterIP" "hostname" "useDHCP" ];
   nodeConfigModule = lib.removeAttrs nodeAttrs builderKeys;
 
   # ── 基础模块栈 ───────────────────────────────────────
@@ -26,7 +26,7 @@ let
       "home-manager" = {
         useGlobalPkgs = true;
         useUserPackages = true;
-        extraSpecialArgs = commonArgs 
+        extraSpecialArgs = commonArgs
           // lib.optionalAttrs (builtins.hasAttr "user" nodeAttrs) { user = nodeAttrs.user; };
         backupFileExtension = "hm-backup";
         # 关闭 nixpkgs 版本不匹配警告（unstable 滚动更新，版本号永远不一致）
@@ -37,13 +37,14 @@ let
     }
   ];
 
-  # ── 条件注入：仅当节点提供静态 IP 时配置 eth0 ──────
-  networkModule = lib.optional (builtins.hasAttr "ip" nodeAttrs) {
+  # ── 条件注入：仅当节点提供静态 IP 且未启用 DHCP 时配置 eth0 ──────
+  networkModule = lib.optional (builtins.hasAttr "ip" nodeAttrs && !(nodeAttrs.useDHCP or false)) {
     networking.interfaces.eth0.useDHCP = false;
     networking.interfaces.eth0.ipv4.addresses = [{
       address = nodeAttrs.ip;
       prefixLength = 24;
     }];
+    networking.nameservers = [ "1.1.1.1" "223.5.5.5" "119.29.29.29" ];
   };
 
   # ── 条件注入：设置主机名 ────────────────────────────
@@ -57,7 +58,7 @@ let
 in
 nixpkgs.lib.nixosSystem {
   # 注入 K8s 专属模块参数（cni0IP 等）+ 节点级 user 覆盖
-  specialArgs = commonArgs 
+  specialArgs = commonArgs
     // lib.optionalAttrs (builtins.hasAttr "cni0IP" nodeAttrs) { inherit (nodeAttrs) cni0IP; }
     // lib.optionalAttrs (builtins.hasAttr "user" nodeAttrs) { user = nodeAttrs.user; };
   modules = finalModules;
