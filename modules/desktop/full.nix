@@ -1,3 +1,5 @@
+# 完整桌面预设：工作站
+# 含 Hyprland + 全部应用 + IM + 笔记本优化
 { pkgs, ... }: {
   imports = [
     ./units/accessibility.nix
@@ -10,11 +12,10 @@
     ./units/hyprland.nix
     ./units/input-method.nix
     ./units/laptop.nix
-    ./units/vivaldi.nix
     ./units/zed.nix
   ];
 
-  # Hyprland 默认不启用，需要时在主机配置中开启：
+  # Hyprland 合成器 + 完整辅助工具链
   wayland.windowManager.hyprland.enable = true;
 
   # ── 通用桌面工具 ─────────────────────────────────────────

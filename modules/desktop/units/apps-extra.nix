@@ -1,4 +1,8 @@
 { pkgs, ... }: {
+  imports = [
+    ./vivaldi.nix          # 浏览器：Vivaldi + Chromium + 缩放修复
+  ];
+
   environment.systemPackages = with pkgs; [
 
     # 媒体

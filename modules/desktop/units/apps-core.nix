@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./vivaldi.nix          # 浏览器：Vivaldi + Chromium + 缩放修复
     ./zed.nix              # 编辑器：Zed + IME 修复
   ];
 

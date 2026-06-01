@@ -19,8 +19,6 @@
     ];
   };
 
-  wayland.windowManager.hyprland.enable = true;
-
   # 主机名应由具体节点定义，而非基座
   # networking.hostName = "workstation";
 }
