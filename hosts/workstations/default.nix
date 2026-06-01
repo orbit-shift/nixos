@@ -1,17 +1,17 @@
 # 团队工作站域
 { inputs, user, lib, dataDir, ... }:
 
-let
-  # 团队共享基座：桌面环境、通用软件
-  baseRole = ../../modules/roles/workstation-base.nix;
-in {
+{
+  # 域级 imports：自动应用到所有成员节点
+  imports = [
+    ../../modules/roles/workstation-base.nix
+  ];
   # 成员：master
   "orbit" = {
     user = "master";
     hostname = "workstation";
     imports = [
       inputs.disko.nixosModules.disko
-      baseRole
       ./orbit/hardware.nix
       ./orbit/disk.nix
       ./orbit/wireguard.nix
@@ -30,7 +30,6 @@ in {
     hostname = "alice-ws";
     imports = [
       inputs.disko.nixosModules.disko
-      baseRole
       ./alice/hardware.nix
     ];
   };
@@ -41,7 +40,6 @@ in {
     hostname = "bob-ws";
     imports = [
       inputs.disko.nixosModules.disko
-      baseRole
       ./bob/hardware.nix
     ];
   };

@@ -3,10 +3,9 @@
     # 核心系统预设
     ../system/core.nix
     ../system/units/hardware-generic.nix
-    ../system/units/vm.nix
+    # ../system/units/vm.nix
 
-    # 完整桌面环境
-    ../desktop/full.nix
+    ../desktop/base.nix
     ../podman/ladder.nix
   ];
 

@@ -61,6 +61,8 @@
       let
         # 导入域定义文件，单独注入 lib（不污染 commonArgs）
         domainDef = import ./hosts/${domainName} (commonArgs // { inherit (nixpkgs) lib; });
+        # 域级 imports（自动合并到所有节点）
+        domainImports = domainDef.imports or [];
         # 判断是否为集群模式 (包含 nodes 属性)
         nodes = if builtins.hasAttr "nodes" domainDef
           then k8sLib.expandCluster domainName domainDef
@@ -69,7 +71,11 @@
       # 统一映射构建，输出 key 为 domain_nodeName（域名=节点名时简化为单名）
       nixpkgs.lib.mapAttrs' (nodeName: nodeConfig:
         let systemName = if domainName == nodeName then nodeName else "${domainName}_${nodeName}";
-        in nixpkgs.lib.nameValuePair systemName (mkNode ({ inherit nodeName domainName; } // nodeConfig))
+            # 域级 imports 合并到节点 imports
+            mergedConfig = nodeConfig // {
+              imports = (nodeConfig.imports or []) ++ domainImports;
+            };
+        in nixpkgs.lib.nameValuePair systemName (mkNode ({ inherit nodeName domainName; } // mergedConfig))
       ) nodes;
 
   in {

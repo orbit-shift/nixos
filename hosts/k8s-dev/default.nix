@@ -44,11 +44,11 @@ in {
       };
 
       # 数据盘挂载
-      fileSystems."/data" = {
-        device = "/dev/nvme0n1p3";
-        fsType = "btrfs";
-        options = [ "compress=zstd" "subvol=@" ];
-      };
+      # fileSystems."/data" = {
+      #   device = "/dev/nvme0n1p3";
+      #   fsType = "btrfs";
+      #   options = [ "compress=zstd" "subvol=@" ];
+      # };
 
       # 允许特定密钥免密登录（格式：ssh-ed25519/ssh-rsa + 公钥 + 注释）
       users.users.${user}.openssh.authorizedKeys.keys = [
