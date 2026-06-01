@@ -9,11 +9,15 @@
         addons = [
           pkgs.fcitx5-gtk
           pkgs.fcitx5-rime
+          pkgs.rime-data
           pkgs.qt6Packages.fcitx5-configtool
           pkgs.qt6Packages.fcitx5-chinese-addons
         ];
       };
     };
+
+    # Fix SVG icon skin rendering in tiling WMs
+    programs.gdk-pixbuf.modulePackages = [ pkgs.librsvg ];
 
     # ── Fcitx5 休眠唤醒后自动重启 ────────────────────────
     # COSMIC 锁屏 SIGKILL 输入法 Applet 导致 Wayland IM 断联。

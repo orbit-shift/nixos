@@ -20,6 +20,9 @@
 
     # 工作站开发模式：符号链接 + git clone
     programs.nushell.developMode = lib.mkForce true;
+
+    # 万象八股文语法模型（增强长句预测）
+    rime.octagram.enable = true;
   };
 
   # 主机名应由具体节点定义，而非基座

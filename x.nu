@@ -2,13 +2,13 @@ def cmpl-hosts [] {
     nix flake show --json | from json | get nixosConfigurations | columns
 }
 
-export def switch [profile: string@cmpl-hosts = 'workstations_orbit'] {
+export def switch [host: string@cmpl-hosts = 'workstations_orbit'] {
     $env.NIXOS_LABEL = (git log -1 --pretty=format:"%s" | sed 's/ /_/g')
-    sudo -E nixos-rebuild switch --flake $".#($profile)"
+    sudo -E nixos-rebuild switch --flake $".#($host)"
 }
 
-export def build [profile: string@cmpl-hosts = 'workstations_orbit'] {
-    nh os build $".#($profile)"    }
+export def build [host: string@cmpl-hosts = 'workstations_orbit'] {
+    nh os build $".#($host)"    }
 
 export def update [] {
     nh flake update

@@ -3,6 +3,14 @@ let
   rimeIce = pkgs.rime-ice;
   wubiSrc = "${dataDir}/rime-wubi";
   cfg = config.rime.wubi;
+  octCfg = config.rime.octagram;
+
+  # ── 万象八股文语法模型 (RIME-LMDG) ──
+  # 轻量版模型 (~200MB)，PC 端推荐使用
+  wanxiangModel = pkgs.fetchurl {
+    url = "https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram";
+    sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # 首次构建会报错提示正确 hash
+  };
 
   # Enumerate all rime-ice files and directories
   rimeIceFiles = [
@@ -31,9 +39,11 @@ let
   ];
   rimeIceDirs = [ "cn_dicts" "en_dicts" "lua" "opencc" ];
 in {
-  # ── Rime 输入法配置（雾凇拼音 + 小鹤双拼 + 可选五笔）───
+  # ── Rime 输入法配置（雾凇拼音 + 小鹤双拼 + 可选五笔/八股文）───
 
   options.rime.wubi.enable = lib.mkEnableOption "Rime 五笔输入支持";
+
+  options.rime.octagram.enable = lib.mkEnableOption "Rime Octagram N-Gram 语言模型（提升长句预测准确度）";
 
   config = lib.mkMerge [
     {
@@ -199,6 +209,33 @@ in {
       xdg.dataFile."fcitx5/rime/wubi86_fg_user.dict.yaml".source = "${wubiSrc}/wubi86_fg_user.dict.yaml";
       xdg.dataFile."fcitx5/rime/pinyin_simp.dict.yaml".source = "${wubiSrc}/pinyin_simp.dict.yaml";
       xdg.dataFile."fcitx5/rime/pinyin_simp.schema.yaml".source = "${wubiSrc}/pinyin_simp.schema.yaml";
+    })
+
+    (lib.mkIf octCfg.enable {
+      # ── 万象八股文语法模型 (RIME-LMDG) ──────
+      # 模型文件 → ~/.local/share/fcitx5/rime/
+      xdg.dataFile."fcitx5/rime/wanxiang-lts-zh-hans.gram".source = wanxiangModel;
+
+      # grammar.yaml 配置文件
+      xdg.dataFile."fcitx5/rime/grammar.yaml".text = ''
+        grammar:
+          language: wanxiang-lts-zh-hans
+          binary_path: wanxiang-lts-zh-hans.gram
+      '';
+
+      # 在雾凇拼音方案中激活语法模型
+      xdg.dataFile."fcitx5/rime/rime_ice.custom.yaml".text = ''
+        patch:
+          __include: grammar:/grammar
+          "translator/contextual_suggestions_weight": 1.0
+      '';
+
+      # 在小鹤双拼方案中激活语法模型
+      xdg.dataFile."fcitx5/rime/double_pinyin_flypy.custom.yaml".text = ''
+        patch:
+          __include: grammar:/grammar
+          "translator/contextual_suggestions_weight": 1.0
+      '';
     })
   ];
 }
