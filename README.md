@@ -61,8 +61,7 @@ flake.nix 扫描 hosts/ 目录
 
 ---
 
-## 📋 Host 加载路径详解
-
+## 📋 Host 加载路径
 ### 1. Workstations（orbit / team-alice / team-bob）
 
 ```

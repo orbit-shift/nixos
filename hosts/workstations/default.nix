@@ -6,6 +6,7 @@
   imports = [
     ../../modules/roles/workstation-base.nix
   ];
+
   # 成员：master
   "orbit" = {
     user = "master";
