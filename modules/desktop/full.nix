@@ -1,6 +1,6 @@
 # 完整桌面预设：工作站
 # 含 Hyprland + 全部应用 + IM + 笔记本优化
-{ pkgs, ... }: {
+{ pkgs, lib, config, ... }: {
   imports = [
     ./units/accessibility.nix
     ./units/apps-core.nix
@@ -23,4 +23,7 @@
   environment.systemPackages = with pkgs; [
     wl-clipboard
   ];
+
+  # ── 合并各模块的 resume 命令 ───────────────────────
+  powerManagement.resumeCommands = config.desktop.inputMethod.resumeCommands;
 }

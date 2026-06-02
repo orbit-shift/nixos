@@ -53,11 +53,8 @@ in {
     {
       # ── Octagram overlay：关闭合并编译，生成独立 .so ──
       nixpkgs.overlays = lib.mkIf octCfg.enable [
-        (final: prev: {
-          librime = prev.librime.overrideAttrs (old: {
-            cmakeFlags = (old.cmakeFlags or []) ++ [ "-DBUILD_MERGED_PLUGINS=OFF" ];
-          });
-        })
+        # BUILD_MERGED_PLUGINS=ON (default): plugins compiled into librime.so,
+        # avoiding runtime dlopen issues with fcitx5-rime
       ];
     }
 
@@ -217,6 +214,9 @@ in {
       });
     }
 
+    # librime-lua and librime-octagram are merged into librime.so at build time
+    # (BUILD_MERGED_PLUGINS=ON), no runtime plugin deployment needed
+
     (lib.mkIf cfg.enable {
       home-manager.users.${user} = {
         # ── Wubi overlay files ──
@@ -234,10 +234,7 @@ in {
     })
 
     (lib.mkIf octCfg.enable {
-      home-manager.users.${user} = {
-        # ── 部署 octagram 插件 ──
-        xdg.dataFile."fcitx5/rime/plugins/librime-octagram.so".source = "${pkgs.librime}/lib/rime-plugins/librime-octagram.so";
-      };
+      # librime-octagram is merged into librime.so at build time
     })
 
     (lib.mkIf (octCfg.enable && wanxiangModel != null) {
@@ -245,7 +242,8 @@ in {
         # ── 万象八股文语法模型 ──
         xdg.dataFile."fcitx5/rime/wanxiang-lts-zh-hans.gram".source = wanxiangModel;
 
-        # octagram.yaml
+        # octagram.yaml — only patches grammar, NOT translator
+        # (translator patches replace the whole section instead of merging)
         xdg.dataFile."fcitx5/rime/octagram.yaml".text = ''
           octagram:
             __patch:
@@ -257,23 +255,18 @@ in {
                 non_collocation_penalty: -5
                 weak_collocation_penalty: -100
                 rear_penalty: -10
-              translator/contextual_suggestions: false
-              translator/max_homophones: 8
-              translator/max_homographs: 8
         '';
 
-        # 雾凇拼音方案
+        # 雾凇拼音方案 — only apply grammar patch, preserve schema's translator config
         xdg.dataFile."fcitx5/rime/rime_ice.custom.yaml".text = ''
           patch:
             __include: octagram:/octagram
-            "translator/contextual_suggestions_weight": 1.0
         '';
 
-        # 小鹤双拼方案
+        # 小鹤双拼方案 — only apply grammar patch, preserve schema's translator config
         xdg.dataFile."fcitx5/rime/double_pinyin_flypy.custom.yaml".text = ''
           patch:
             __include: octagram:/octagram
-            "translator/contextual_suggestions_weight": 1.0
         '';
       };
     })

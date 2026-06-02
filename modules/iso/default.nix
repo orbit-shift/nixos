@@ -16,16 +16,7 @@ in {
     # ── Nix 生态工具（nh, nixos-anywhere 等） ────
     ../system/units/nix.nix
 
-    # ── 全局 overlay（自动扫描 overlay/ 目录下所有模块） ──
-    (let
-      overlayDir = ../overlay;
-      dirEntries = builtins.readDir overlayDir;
-      overlayFiles = builtins.filter (name:
-        dirEntries.${name} == "regular" && lib.hasSuffix ".nix" name
-      ) (builtins.attrNames dirEntries);
-    in {
-      nixpkgs.overlays = map (name: import (overlayDir + "/${name}")) overlayFiles;
-    })
+    # (overlay 目录已移除，不再加载)
   ];
 
   # ── 基础 CLI 工具（复用 base.nix 的包列表） ────

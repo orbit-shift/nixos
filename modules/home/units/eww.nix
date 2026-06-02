@@ -21,7 +21,8 @@ in
     recursive = true;
   };
 
-  # 登录自动启动：Type=forking 以支持 eww daemon 的后台分离模式
+  # ── 登录自动启动 ────────────────────────────────────
+  # Type=forking 以支持 eww daemon 的后台分离模式
   systemd.user.services.eww = {
     Unit = {
       Description = "Eww daemon";
@@ -34,7 +35,6 @@ in
       # 启动脚本：探测 Wayland Socket -> 启动 Daemon -> 打开窗口
       ExecStart = "${pkgs.bash}/bin/bash -c 'export PATH=${pkgs.coreutils}/bin:${pkgs.gawk}/bin:${pkgs.bash}/bin:${pkgs.iproute2}/bin:${pkgs.iw}/bin:${pkgs.gnugrep}/bin:${pkgs.procps}/bin:/run/wrappers/bin; for i in 1 2 3 4 5; do WAYLAND_DISPLAY=$(${pkgs.coreutils}/bin/ls /run/user/%U/wayland-* 2>/dev/null | ${pkgs.coreutils}/bin/head -n 1 | ${pkgs.findutils}/bin/xargs -r ${pkgs.coreutils}/bin/basename); if [ -n \"$WAYLAND_DISPLAY\" ]; then break; fi; sleep 0.2; done; if [ -z \"$WAYLAND_DISPLAY\" ]; then echo \"No WAYLAND_DISPLAY\"; exit 1; fi; export WAYLAND_DISPLAY; export XDG_RUNTIME_DIR=/run/user/%U; ${pkgs.eww}/bin/eww daemon && sleep 1 && ${pkgs.eww}/bin/eww open omni-tray'";
       Restart = "on-failure";
-      RestartSec = "3s";
       # 注入 Nix 环境变量，确保 defpoll 脚本能找到 awk, cat, tr 等命令
       Environment = [
         "PATH=${pkgs.coreutils}/bin:${pkgs.gawk}/bin:${pkgs.bash}/bin:${pkgs.iproute2}/bin:${pkgs.iw}/bin:${pkgs.gnugrep}/bin:${pkgs.procps}/bin:/run/wrappers/bin"
@@ -42,9 +42,31 @@ in
         "GDK_BACKEND=wayland"
         "XDG_SESSION_TYPE=wayland"
       ];
+      RestartSec = "5s";
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
+  # ── 休眠前关闭 eww ─────────────────────────────────
+  # COSMIC 锁屏/唤醒会重建 Wayland session，旧 socket 失效。
+  # GTK-Wayland 连接断开后进程不退出，进入 zombie 状态。
+  # 在 suspend 前主动 kill，systemd 会在 resume 后通过 WantedBy 重新启动。
+  systemd.user.services.eww-suspend-killer = {
+    Unit = {
+      Description = "Kill eww before suspend";
+      Before = [ "sleep.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.procps}/bin/pkill -f eww || true";
+    };
+  };
+
+  systemd.user.targets.sleep = {
+    Unit = {
+      Wants = [ "eww-suspend-killer.service" ];
     };
   };
 }
