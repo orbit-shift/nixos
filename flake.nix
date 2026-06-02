@@ -50,9 +50,6 @@
       nushellSrc = my-nushell-config.outPath;
       nushellGitUrl = "https://github.com/${my-nushell-config.owner}/${my-nushell-config.repo}.git";
       nushellLocalPath = "/home/${user}/Configuration/nushell";
-
-      # ── overlay 目录路径（相对于 flake 根） ──
-      overlayDir = "./modules/overlay";
     };
 
     # ── 通用构建器 ─────────────────────────────────────

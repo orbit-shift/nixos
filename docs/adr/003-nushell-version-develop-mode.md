@@ -12,7 +12,7 @@ nushell 的「版本」（overlay 控制）和「配置部署方式」（develop
 | 维度 | Overlay（版本） | Develop Mode（配置部署） |
 |------|------|------|
 | **控制什么** | nushell 二进制版本（0.113.0 vs 0.112.2） | nushell **配置文件**从哪来 |
-| **在哪设置** | `modules/overlay/nushell.nix` | `programs.nushell.developMode` in role 模块 |
+| **在哪设置** | `modules/system/units/nushell.nix`（逻辑）+ `hosts/workstations/nushell.nix`（选项值） | `programs.nushell.developMode` in role 模块 |
 | **生效范围** | 系统级 `pkgs.nushell` | Home Manager 用户配置 |
 | **设置者** | 域（flake builder 决定是否启用） | 角色模块（声明配置部署方式） |
 

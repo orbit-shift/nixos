@@ -1,42 +1,69 @@
-# ADR-002: Overlay 启用策略 — 按域而非按配置值
+# ADR-002: Overlay 策略 — 选项驱动，内聚模块
 
 **日期**: 2026-06-01
+**修订**: 2026-06-02
 **状态**: 已采纳
-**上下文**: `libs/nixos-builder.nix` 第 27 行
 
 ### 问题
 
-如何决定哪些节点应用 `modules/overlay/` 下的自定义 overlay（如 nushell 0.113.0）？
+如何决定哪些节点应用自定义 overlay（如 nushell 0.113.0）？
 
-### 备选方案
+### 历史方案（已废弃）
 
-| 方案 | 描述 | 缺点 |
-|------|------|------|
-| A. 按配置值 | 检查 role 模块中的 `programs.nushell.developMode` 或自定义 `nushell.developMode` 属性 | 需要 flake 提前导入 role 模块读取属性；`lib.mkForce` 返回 override 集合而非布尔值；引入模块求值顺序和参数传递复杂性 |
-| B. 按文件名 | 检测 imports 是否包含 `workstation-base.nix` | 硬编码文件名，脆弱且不可扩展 |
-| **C. 按域** | 通过 `nodeAttrs.domainName == "workstations"` 判断 | 需要新增域时修改判断条件 |
+| 方案 | 描述 | 废弃原因 |
+|------|------|----------|
+| ~~Builder 隐式扫描~~ | `libs/nixos-builder.nix` 通过 `domainName` 判断 + 扫描 `modules/overlay/` | **AI 失控**：散落目录 = 垃圾场 |
+| ~~域级 import 独立 overlay~~ | `hosts/<domain>/<name>-overlay.nix` 通过 `imports` 引入 | 仍然散落，和 vivaldi/wanxiang 模式不一致 |
 
-### 决策
+### 真正原因（核心教训）
 
-采用 **方案 C**：在 `nixos-builder.nix` 中通过 `nodeAttrs.domainName == "workstations"` 决定是否启用 overlay。
+**不要让 AI 有一个可以自由撒落的目录。**
+
+`modules/overlay/` 存在时，AI 遇到任何包覆盖需求就会本能地往里扔文件——不管这东西是否应该属于某个功能模块、是否应该由某个选项控制、是否应该内聚。
+
+这不是 AI 的能力问题，是架构给错了自由度。消除散落目录、强制显式引入，是从结构上杜绝 AI 乱塞文件的唯一方式。
+
+### 当前方案
+
+**模块内聚到 `modules/system/units/`（或功能专属目录），host 文件只设选项值。**
 
 ```nix
-nixpkgs.overlays = lib.optionals (nodeAttrs.domainName or null == "workstations")
-  (map (name: import (overlayDir + "/${name}")) overlayFiles);
+# modules/system/units/nushell.nix — 模块定义逻辑
+{ pkgs, lib, config, ... }:
+{
+  options.nushell.musl = {
+    url    = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+    sha256 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+  };
+
+  config = let cfg = config.nushell.musl;
+  in {
+    nixpkgs.overlays = lib.optional (cfg.url != null && cfg.sha256 != null)
+      (final: prev: { nushell = ...; });
+  };
+}
 ```
+
+```nix
+# hosts/workstations/nushell.nix — 只设选项值（和 vivaldi.nix 一个画风）
+{ ... }: {
+  nushell.musl.url    = "https://github.com/nushell/nushell/releases/download/...";
+  nushell.musl.sha256 = "sha256-...";
+}
+```
+
+- **没有指定选项** → overlay 关闭，用 nixpkgs 默认包
+- **指定了选项** → overlay 开启，替换为自定义包
 
 ### 理由
 
-1. **扩展合理** — workstations 是开发机，应用全部 overlay 符合直觉。**未来新增的 overlay（如自定义编译器、开发工具等）会自动生效，无需额外配置**。其他域（k8s/server/portable）用 nixpkgs 官方包，避免不必要的下载和构建
-2. **改动最小** — 只改 builder 一行，不需要在 flake.nix 中传递额外配置，不需要修改 `builderKeys`
-3. **职责清晰** — overlay 是 nixpkgs 打包层面的概念，应在构建器中统一决策。按域判断时：
-   - **Builder 层**：决定「哪些机器需要自定义包」（一个域级判断）
-   - **Role 层**：只声明「这个角色的功能需求」（如 workstation-base 声明需要开发工具、桌面环境）
-   - 两层不互相渗透
-   - 反之，如果在 builder 中读取 role 模块的 `programs.nushell.developMode`，role 模块就要知道「我设置这个值会影响 overlay 是否启用」，职责耦合
-4. **无间接依赖** — 不需要在 flake 层提前导入 role 模块，避免了 `pkgs` 参数缺失、`lib.mkForce` 类型不匹配等问题
+1. **和 vivaldi/wanxiang 一致** — host 文件只写选项值，不碰逻辑
+2. **模块内聚** — 逻辑在 `modules/system/units/` 中，由 `core.nix` 统一引入，所有节点默认加载模块定义
+3. **选项驱动** — overlay 通过 `lib.optional (cfg != null)` 控制，未设置时零开销
+4. **无散落目录** — AI 没有地方可以乱塞文件
 
 ### 后果
 
-- 新增需要 overlay 的域时，需在 builder 中添加对应的域名判断
-- 如果将来某个非 workstations 域也需要 overlay，可改为白名单模式：`builtins.elem domainName [ "workstations" "other" ]`
+- `modules/overlay/` 目录已删除
+- nushell 逻辑移至 `modules/system/units/nushell.nix`
+- host 文件 `hosts/workstations/nushell.nix` 和 `vivaldi.nix`/`wanxiang.nix` 画风一致

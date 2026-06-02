@@ -8,6 +8,12 @@ let
 
   wanxiangModel = wanxiangCfg.src;
 
+  # ── 内聚：覆盖 librime 以编译 octagram 插件 ──
+  # 关闭合并编译（生成独立 .so），librime 源码自带 darts.h
+  librimeWithOctagram = pkgs.librime.overrideAttrs (old: {
+    cmakeFlags = (old.cmakeFlags or []) ++ [ "-DBUILD_MERGED_PLUGINS=OFF" ];
+  });
+
   # Enumerate all rime-ice files and directories
   rimeIceFiles = [
     # Top-level schema/dict files
@@ -215,27 +221,11 @@ in {
       xdg.dataFile."fcitx5/rime/pinyin_simp.schema.yaml".source = "${wubiSrc}/pinyin_simp.schema.yaml";
     })
 
-    (lib.mkIf octCfg.enable (let
+    (lib.mkIf octCfg.enable {
       # ── 部署 octagram 插件 ──
-      # nixpkgs 的 librime-octagram 是纯源码包，需要单独编译
-      octagramPlugin = pkgs.stdenv.mkDerivation {
-        pname = "librime-octagram-plugin";
-        version = "0-unstable-2024-11-18";
-        src = pkgs.librime-octagram;
-        nativeBuildInputs = [ pkgs.cmake pkgs.pkg-config ];
-        buildInputs = [ pkgs.librime ];
-        cmakeFlags = [ "-DBUILD_TOOLS=OFF" ];
-        installPhase = ''
-          mkdir -p $out/lib
-          find . -name '*.so' -exec cp {} $out/lib/ \;
-        '';
-      };
-    in {
-      home.packages = [ octagramPlugin ];
-
-      # 将插件 .so 部署到 RIME 插件目录（fcitx5-rime 会自动扫描）
-      xdg.dataFile."fcitx5/rime/plugins/librime-octagram.so".source = "${octagramPlugin}/lib/librime-octagram.so";
-    }))
+      # librimeWithOctagram 在 let 块中定义（关闭合并编译，生成独立 .so）
+      xdg.dataFile."fcitx5/rime/plugins/librime-octagram.so".source = "${librimeWithOctagram}/lib/rime-plugins/librime-octagram.so";
+    })
 
     (lib.mkIf (octCfg.enable && wanxiangModel != null) {
       # ── 万象八股文语法模型 (RIME-LMDG) ──────

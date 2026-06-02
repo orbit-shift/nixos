@@ -98,3 +98,23 @@ export module utils {
         | $"sha256-($in)"
     }
 }
+
+export def deployment [
+    host: string@cmpl-hosts
+    ssh
+    --off-line
+    --kexec: path = '~/pub/Application/Linux/nixos-kexec-installer-noninteractive-x86_64-linux.tar.gz'
+] {
+    mut args = [
+        --kexec $kexec
+        --flake ($env.PWD)#($host) $ssh
+    ]
+    if $off_line {
+        $args ++= [
+            --no-substitute-on-destination
+            --no-use-machine-substituters
+        ]
+    }
+    nix run github:nix-community/nixos-anywhere -- ...$args
+
+}

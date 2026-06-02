@@ -314,36 +314,33 @@ nixos/
 
 ## 🔀 Overlay 策略
 
-本项目采用**分层 overlay 架构**，按影响范围分为三种层级：
+本项目采用**选项驱动 overlay 架构**：模块内聚在 `modules/*/units/` 中，host 文件只设选项值。
 
-### 1. 域级 Overlay（`modules/overlay/`）
+### 核心原则
 
-- **生效范围**：workstations 域所有节点
-- **定义位置**：`libs/nixos-builder.nix` 通过 `domainName == "workstations"` 判断
-- **典型用途**：开发工具全局替换（如 nushell 0.113.0）
-- **新增**：在 `modules/overlay/` 目录下添加 `.nix` 文件即可，自动被 builder 扫描
-- **详见**：ADR-001（按域启用策略）、ADR-002（nushell 维度分离）
+**模块定义逻辑（`modules/`），host 文件只设选项值（`hosts/`）。**
 
-### 2. 模块级 Overlay（`nixpkgs.overlays = [...]`）
+所有 overlay 模块统一放在 `modules/*/units/` 中，由 `<presets>.nix` 统一引入。host 文件只负责设置选项值，不碰逻辑。
 
-- **生效范围**：引入该模块的 host 内所有 `pkgs.<name>` 引用
-- **定义位置**：模块内部（如 `dev/units/surrealdb-server.nix`）
-- **典型用途**：引入即统一版本，防止同 host 内混用多版本
-- **详见**：ADR-004（SurrealDB 版本管理）
+- **未设置选项** → overlay 关闭，用 nixpkgs 默认包
+- **设置了选项** → overlay 开启，替换为自定义包
 
-### 3. 服务级覆盖（`package = pkgs.xxx.overrideAttrs ...`）
+### 示例
 
-- **生效范围**：仅该服务实例，不影响其他 `pkgs.xxx` 引用
-- **适用场景**：只需要修改某个服务的包，其他模块仍用原版
-- **缺点**：同 host 内可能意外引入不同版本
+```nix
+# modules/system/units/nushell.nix — 定义选项 + overlay 逻辑
+# hosts/workstations/nushell.nix  — 只设选项值
+# hosts/workstations/vivaldi.nix  — 只设选项值（同模式）
+# hosts/workstations/wanxiang.nix — 只设选项值（同模式）
+```
 
 ### 选择指南
 
-| 需求 | 方案 | 示例 |
-|------|------|------|
-| 全局替换（特定域） | 域级 overlay | nushell 自定义版本 |
-| 引入模块即统一版本 | 模块级 overlay | surrealdb-server.nix |
-| 仅改一个服务的包 | 服务级覆盖 | vivaldi.nix 命令行参数 |
+| 需求 | 方案 |
+|------|------|
+| 全局包替换 | `modules/*/units/` + 选项驱动 |
+| 桌面应用定制 | `modules/*/units/` + 选项驱动 |
+| 仅改一个服务的包 | 服务级覆盖 |
 
 ---
 

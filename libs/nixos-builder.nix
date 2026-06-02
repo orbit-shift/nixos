@@ -16,18 +16,6 @@ let
   baseModules = [
     { nixpkgs.hostPlatform = "x86_64-linux"; }
 
-    # ── Overlay（仅 workstations 应用，其他节点用 nixpkgs 官方包） ──
-    (let
-      overlayDir = ../modules/overlay;
-      dirEntries = builtins.readDir overlayDir;
-      overlayFiles = builtins.filter (name:
-        dirEntries.${name} == "regular" && lib.hasSuffix ".nix" name
-      ) (builtins.attrNames dirEntries);
-    in {
-      nixpkgs.overlays = lib.optionals (nodeAttrs.domainName or null == "workstations")
-        (map (name: import (overlayDir + "/${name}")) overlayFiles);
-    })
-
     commonArgs.inputs.disko.nixosModules.disko
 
     # 核心系统预设 (所有节点默认加载)
