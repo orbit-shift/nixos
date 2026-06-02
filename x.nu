@@ -1,20 +1,26 @@
+const ROOT = path self .
+
 def cmpl-hosts [] {
+    cd $ROOT
     nix flake show --json | from json | get nixosConfigurations | columns
 }
 
 export def switch [host: string@cmpl-hosts = 'workstations_orbit'] {
+    cd $ROOT
     $env.NIXOS_LABEL = (git log -1 --pretty=format:"%s" | sed 's/ /_/g')
     sudo -E nixos-rebuild switch --flake $".#($host)"
 }
 
 export def build [host: string@cmpl-hosts = 'workstations_orbit'] {
-    nh os build $".#($host)"    }
+    nh os build $"($ROOT)#($host)"    }
 
 export def update [] {
-    nh flake update
+    cd $ROOT
+    sudo nix flake update
 }
 
 export def check [] {
+    cd $ROOT
     sudo nix flake check
 }
 
@@ -40,6 +46,7 @@ export def install [
     --root: path = /mnt
     --no-root-password
 ] {
+    cd $ROOT
     mut args = [
         --root $root --flake $".#($host)"
         --option substituters
@@ -59,6 +66,7 @@ export def rebuild [
     host: string@cmpl-hosts = 'portable'
     --root: path = /mnt
 ] {
+    cd $ROOT
     sudo (which nixos-enter).0.path ...[
         --root $root
         --

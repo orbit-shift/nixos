@@ -8,7 +8,6 @@
     ../desktop/full.nix
 
     ../dev/fullstack.nix
-    ../podman/full.nix      # Podman 全家桶 (代理 + 代码托管 + RSS)
     ../flake-srv/hermes-system.nix  # Hermes Agent: systemd 守护 + 全局 CLI 包裹
   ];
 

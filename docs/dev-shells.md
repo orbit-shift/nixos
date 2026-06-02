@@ -82,4 +82,4 @@ direnv allow
 | 复现性 | 依赖网络/OS | 完全锁定（flake.lock） |
 | 跨平台 | 需分别处理 | 同一配置多架构支持 |
 
-> 建议：对于任何语言的项目，都可以使用 Nix devShell 作为环境基础，再配合语言专属工具（如 `uv venv`、`cargo`、`bun`）管理运行时依赖。
+> 建议：对于任何语言的项目，都可以使用 Nix devShell 作为环境基础，再配合语言专属工具（如 `uv venv`、`cargo`、`npm`）管理运行时依赖。
