@@ -53,6 +53,10 @@
     "net.core.wmem_max"                = 16777216;
     "net.ipv4.tcp_rmem"                = "4096 87380 16777216";
     "net.ipv4.tcp_wmem"                = "4096 65536 16777216";
+    # TCP keepalive: 防止中间设备因 idle timeout 断开长连接（registry push、DB 连接池等）
+    "net.ipv4.tcp_keepalive_time"      = 30;
+    "net.ipv4.tcp_keepalive_intvl"     = 10;
+    "net.ipv4.tcp_keepalive_probes"    = 6;
   };
 
   # 基础 CLI 工具（所有主机通用）
