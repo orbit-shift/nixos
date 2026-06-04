@@ -1,5 +1,6 @@
 { ... }: {
   imports = [
+    ./units/direnv.nix
     ./units/python.nix
     ./units/rust.nix
     ./units/c-cpp.nix
