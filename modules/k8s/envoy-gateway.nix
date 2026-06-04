@@ -25,26 +25,24 @@
       src = envoyGatewayRawFile;
     }
     ''
-      # 1. 使用 sed 为 envoyproxy/gateway 镜像添加私有仓库前缀
-      # 2. 使用 yq-go 过滤掉 Gateway API CRD（group 为 gateway.networking.k8s.io）
-      sed 's|envoyproxy/gateway:|docker.lizzie.fun/envoyproxy/gateway:|g' $src |
+      # 使用 yq-go 过滤掉 Gateway API CRD（group 为 gateway.networking.k8s.io）
       ${pkgs.yq-go}/bin/yq eval-all '
         select(
           .kind != "CustomResourceDefinition" or
           .spec.group != "gateway.networking.k8s.io"
         )
-      ' > $out
+      ' $src > $out
     '';
 
   # Kubernetes Reflector manifest for cross-namespace Secret sync
-  # Patched to use docker.lizzie.fun mirror and add a metrics Service
+  # Adds a metrics Service
   reflectorManifest = pkgs.runCommand "reflector-patched.yaml" {
     raw = pkgs.fetchurl {
       url = "https://github.com/emberstack/kubernetes-reflector/releases/latest/download/reflector.yaml";
       hash = "sha256-SwcNk/ovfQqiS7pqHrIi+DndcFSulYQI2i+wqPvZ8R0=";
     };
   } ''
-    sed 's|docker.io/emberstack/|docker.lizzie.fun/emberstack/|g' $raw > $out
+    cp $raw $out
     cat >> $out << 'EOF'
 ---
 apiVersion: v1
@@ -142,17 +140,17 @@ in {
 
     # ── Deploy Kubernetes Reflector ──────────────────────────
     systemd.services.deploy-reflector = {
-    description = "Deploy emberstack/kubernetes-reflector for cross-namespace Secret sync";
-    after = [ "kube-apiserver.service" ];
-    wantedBy = lib.mkForce [];
-    serviceConfig.Type = "oneshot";
-    script = ''
-      echo "[deploy-reflector] Installing Reflector..."
-      ${kubectl} apply --server-side -f ${reflectorManifest}
-    '';
-  };
+      description = "Deploy emberstack/kubernetes-reflector for cross-namespace Secret sync";
+      after = [ "kube-apiserver.service" ];
+      wantedBy = lib.mkForce [];
+      serviceConfig.Type = "oneshot";
+      script = ''
+        echo "[deploy-reflector] Installing Reflector...";
+        ${kubectl} apply --server-side -f ${reflectorManifest}
+      '';
+    };
 
-  # ── 清理 Envoy Gateway ──────────────────────────────
+    # ── 清理 Envoy Gateway ──────────────────────────────
     systemd.services.cleanup-envoy-gateway = {
       description = "Cleanup Envoy Gateway resources";
       serviceConfig = {
