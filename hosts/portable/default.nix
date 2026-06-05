@@ -5,7 +5,7 @@
   portable = {
     imports = [
       inputs.disko.nixosModules.disko
-      ./existing-disk.nix
+      ./disk.nix
       ./hardware-configuration.nix
       ../../modules/presets/portable.nix
     ];

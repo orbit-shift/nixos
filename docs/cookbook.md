@@ -1,6 +1,6 @@
-# 日常操作流程
+# Cookbook
 
-本指南涵盖了 NixOS 系统的日常维护、更新与清理操作。
+NixOS 常用操作手册，涵盖日常维护、更新、清理以及运行外部二进制文件等实用技巧。
 
 ## flake.lock 说明
 
@@ -18,31 +18,14 @@
 
 ## 更新系统
 
-```bash
-### 标准更新流程（推荐）
+### 标准更新流程
+
+直接使用 `nh`：
 
 ```bash
-# 1. 更新 lock 文件（只锁定版本，不下载包）
-nix flake update
-
-# 2. 验证配置能否成功构建（不实际切换，会下载必要依赖）
-sudo nixos-rebuild dry-build --flake .#workstation
-
-# 3. 确认无误后重建并切换（不重启）
-sudo nixos-rebuild switch --flake .#workstation
-
-# 重建并重启（内核更新时必须）
-sudo nixos-rebuild switch --flake .#workstation --upgrade
+nh os build/switch
 ```
 
-### 使用 nom 美化输出（Nushell）
-
-默认 nix 日志折叠且难以阅读，可用 `nom`（nix-output-monitor）获取进度条和结构化日志。
-
-```bash
-# Nushell 语法：合并 stdout + stderr 管道传给 nom
-sudo nixos-rebuild switch --flake .#dev__dxserver o+e>| nom
-```
 
 ## 切换世代与回滚
 
@@ -119,4 +102,45 @@ Home Manager 随 `nixos-rebuild` 自动更新。如需单独应用：
 
 ```bash
 home-manager switch --flake .#master
+```
+
+## 运行外部二进制文件
+
+NixOS 的动态链接器路径特殊，直接运行从外部下载或编译的二进制文件可能失败。以下是三种解决方案：
+
+### 使用 `nix-ld`（推荐）
+
+最通用的方法，允许动态链接的二进制文件使用系统的库。
+
+```nix
+# 在 NixOS 配置模块中添加：
+programs.nix-ld.enable = true;
+programs.nix-ld.libraries = with pkgs; [
+  stdenv.cc.cc
+  zlib
+  openssl
+  # 根据需要添加其他库
+];
+```
+
+### 直接运行静态二进制文件
+
+完全静态编译（使用 musl libc）的二进制文件不依赖系统库，可以直接运行。
+
+```bash
+chmod +x ./static-binary
+./static-binary
+
+# 验证是否为静态链接：
+file ./binary  # 输出应包含 "statically linked"
+ldd ./binary   # 输出应显示 "not a dynamic executable"
+```
+
+### 使用 `patchelf`
+
+如果必须运行特定的动态二进制文件且不想全局配置 nix-ld，可以使用 `patchelf` 修改其解释器。
+
+```bash
+nix-shell -p patchelf
+patchelf --set-interpreter "$(cat /nix/var/nix/profiles/system/sw/lib/ld-linux-x86-64.so.2)" ./binary
 ```
