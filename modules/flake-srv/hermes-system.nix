@@ -105,7 +105,7 @@ in {
     inherit (config.systemd.services.hermes-base-env) path;
     serviceConfig = config.systemd.services.hermes-base-env.serviceConfig // {
       # 本地使用 127.0.0.1 可跳过 OAuth 认证要求；如需局域网访问改用 0.0.0.0 并配置 auth 或加 --insecure
-      ExecStart = "${srcDir}/.venv/bin/hermes dashboard --host 127.0.0.1 --port 9119 --no-open";
+      ExecStart = "${srcDir}/.venv/bin/hermes dashboard --host 127.0.0.1 --port 9119 --no-open --skip-build";
     };
   };
 }

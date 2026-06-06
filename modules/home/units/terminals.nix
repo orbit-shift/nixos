@@ -9,13 +9,13 @@
       font-family           = "Lilex";
       font-style            = "Regular";
       font-size             = 11;
-      shell-integration     = "detect";
+      shell-integration     = "none";
       window-padding-x      = 2;
       window-padding-y      = 0;
       window-height         = 40;
       window-width          = 120;
       window-decoration     = false;
-      command               = "zellij attach --create X";
+      command               = "${pkgs.zellij}/bin/zellij attach --create X";
       keybind = [
         "clear"
         "ctrl+shift+comma=reload_config"
