@@ -81,7 +81,8 @@ in {
   isoImage.volumeID = "NIXOS_AW";
   image.fileName = "nixos-anywhere.iso";
   isoImage.squashfsCompression = "zstd -Xcompression-level 22";
-  isoImage.makeUsbBootable = false;
+  isoImage.makeUsbBootable = true;
+  isoImage.makeEfiBootable = true;
   isoImage.efiSplashImage = null;
 
   # ── 文件系统 ────────────────────────────────────

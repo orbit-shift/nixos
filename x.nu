@@ -196,9 +196,21 @@ export module qemu {
             -device usb-tablet
         ]
 
-        # 2. 核心分流：有 ISO 时用你测试成功的纯命令，无 ISO 时加上 UEFI 固件进硬盘
+        # 2. 确保 OVMF_VARS 文件存在（ISO 和硬盘启动都需要 UEFI）
+        if not ($OVMF_VARS | path exists) {
+            mkdir $"($OVMF_VARS | path dirname)"
+            cp $OVMF_VARS_SRC $OVMF_VARS
+            chmod 644 $OVMF_VARS
+        }
+
+        # 3. UEFI 固件（ISO 和硬盘启动都挂 pflash，保持 UEFI 模式一致）
+        $args ++= [
+            -drive $"if=pflash,format=raw,unit=0,readonly=on,file=($OVMF_CODE)"
+            -drive $"if=pflash,format=raw,unit=1,file=($OVMF_VARS)"
+        ]
+
+        # 4. 核心分流：有 ISO 时从 CDROM 启动，无 ISO 时从硬盘启动
         if ($iso | is-not-empty) {
-            # 【有 ISO 时】：1:1 像素级复刻你跑通的命令！不挂任何 pflash 固件，硬盘在先，ISO 在后
             let iso_path = $"($ROOT)/result/iso/($iso)"
             $args ++= [
                 -drive $"file=($cow),if=virtio,format=qcow2"
@@ -206,17 +218,7 @@ export module qemu {
                 -boot d
             ]
         } else {
-            # 【不带参数时】：必须先确保 VARS 文件存在
-            if not ($OVMF_VARS | path exists) {
-                mkdir ($OVMF_VARS | path dirname)
-                cp $OVMF_VARS_SRC $OVMF_VARS
-                chmod 644 $OVMF_VARS
-            }
-
-            # 挂载 UEFI 固件 + 硬盘，秒进你的磁盘系统
             $args ++= [
-                -drive $"if=pflash,format=raw,unit=0,readonly=on,file=($OVMF_CODE)"
-                -drive $"if=pflash,format=raw,unit=1,file=($OVMF_VARS)"
                 -drive $"file=($cow),if=virtio,format=qcow2"
                 -boot c
             ]
