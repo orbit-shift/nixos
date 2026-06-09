@@ -89,16 +89,19 @@ in {
 
   # ── 网络 ────────────────────────────────────────
   networking.useDHCP = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [ 22 2222 ];
 
   # ── SSH：默认开启 + 内置公钥 ───────────────────
   services.openssh = {
     enable = true;
     settings = {
-      Port = 22;
       PermitRootLogin = "yes";
       PasswordAuthentication = false;
     };
+    extraConfig = ''
+      Port 22
+      Port 2222
+    '';
   };
 
   # ── 用户 ────────────────────────────────────────

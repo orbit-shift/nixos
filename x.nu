@@ -140,14 +140,18 @@ export module utils {
 
 export def deployment [
     host: string@cmpl-hosts
-    ssh
+    target
+    --port: string
     --off-line
     --kexec: path = '~/pub/Application/Linux/nixos-kexec-installer-noninteractive-x86_64-linux.tar.gz'
 ] {
     mut args = [
         --kexec $kexec
-        --flake ($env.PWD)#($host) $ssh
+        --flake ($env.PWD)#($host) $target
     ]
+    if ($port | is-not-empty) {
+        $args ++= [--post-kexec-ssh-port $port]
+    }
     if $off_line {
         $args ++= [
             --no-substitute-on-destination
@@ -184,8 +188,8 @@ export module qemu {
             -smp 4
             -cpu host
             -vga qxl
-            -net "nic,model=virtio"
-            -net "user,hostfwd=tcp::2266-:2222"
+            -netdev "user,id=net0,hostfwd=tcp::2266-:2222,hostfwd=tcp::2267-:22"
+            -device "virtio-net-pci,netdev=net0"
             -device virtio-balloon-pci
             -spice "port=5900,addr=127.0.0.1,disable-ticketing=on"
             -device qemu-xhci

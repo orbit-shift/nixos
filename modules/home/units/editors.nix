@@ -88,7 +88,6 @@
       vscode-langservers-extracted  # html/css/json/eslint
       taplo                                       # TOML
       nil                                         # Nix LSP
-      marksman                                    # Markdown
       nufmt                                       # nushell 格式化
     ];
   };
