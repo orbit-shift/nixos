@@ -5,7 +5,7 @@
 (defwindow omni-tray
   :monitor 0
   :geometry (geometry :x "8px"
-                      :y "20%"
+                      :y "50%"
                       :width "50px"
                       :anchor "top right")
   :stacking "fg"
