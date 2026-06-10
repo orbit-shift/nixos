@@ -10,6 +10,7 @@
     ./units/apps-core.nix
     ./units/hyprland.nix
     ./units/eww.nix
+    ./units/home-desktop.nix
   ];
 
   # Hyprland 合成器 + 完整辅助工具链

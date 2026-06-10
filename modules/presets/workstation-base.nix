@@ -1,7 +1,9 @@
 { inputs, user, lib, pkgs, ... }: {
   imports = [
-    # 核心系统预设 (sys, base, nix, users, network, extra, container)
+    # 核心系统预设 + Home Manager 配置
     ../system/core.nix
+    ../system/home.nix
+
     ../services/virt.nix               # libvirtd/virt-manager 虚拟机支持
 
     ../desktop/full.nix
@@ -18,15 +20,8 @@
   boot.tmp.useTmpfs = true;
   boot.tmp.tmpfsSize = "50%";  # 分配最大 50% 物理内存给临时盘
 
-  # ── 用户环境配置 ──────────────────────────────────────
-  home-manager.users.${user} = {
-    imports = [
-      ../home/desktop.nix
-    ];
-
-    # 工作站开发模式：符号链接 + git clone
-    programs.nushell.developMode = lib.mkForce true;
-  };
+  # 工作站开发模式：符号链接 + git clone
+  programs.nushell.developMode = lib.mkForce true;
 
   # 主机名应由具体节点定义，而非基座
   # networking.hostName = "workstation";

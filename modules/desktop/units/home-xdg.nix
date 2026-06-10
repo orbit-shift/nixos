@@ -116,11 +116,9 @@ in
     };
   };
 
-  # 环境变量（用户级）
+  # 环境变量（仅桌面：BROWSER 指向 GUI 浏览器）
+  # EDITOR / VISUAL / PAGER 已移至 system/units/home-base.nix（全环境通用）
   home.sessionVariables = {
-    EDITOR      = "hx";
-    VISUAL      = "hx";
     BROWSER     = "vivaldi";
-    PAGER       = "glow";
   };
 }

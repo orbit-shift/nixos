@@ -1,17 +1,15 @@
 { pkgs, lib, user, ... }: {
   imports = [
-    # 核心系统预设
+    # 核心系统预设 + Home Manager 配置
     ../system/core.nix
+    ../system/home.nix
+
     # ../services/virt.nix
 
     ../desktop/base.nix
     ../services/ladder.nix
   ];
 
-  # 用户环境配置 (Desktop)
-  home-manager.users.${user} = {
-    imports = [ ../home/desktop.nix ];
-  };
 
   # udisks2 用于自动挂载可移动设备
   services.udisks2.enable = true;

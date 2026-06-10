@@ -8,6 +8,7 @@
 
     # ── 核心系统预设 (sys, base, nix, users, network, extra, container) ──
     ../system/core.nix
+    ../system/home.nix
 
     # 桌面环境 (QEMU 最小预设：Hyprland + 基础组件)
     ../desktop/mini.nix
@@ -16,12 +17,6 @@
     ../dev/server.nix
   ];
 
-  # ── 用户环境配置 ──────────────────────────────────────
-  home-manager.users.${user} = {
-    imports = [
-      ../home/desktop.nix
-    ];
-  };
 
   # QEMU/KVM guest: SPICE agent for clipboard sharing and auto-resolution
   services.spice-vdagentd.enable = true;

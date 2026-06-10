@@ -45,12 +45,5 @@
     };
   };
 
-  # ── Zellij ────────────────────────────────────────────────────
-  programs.zellij = {
-    enable = true;
-    enableZshIntegration = true;
-  };
 
-  # Zellij configuration
-  xdg.configFile."zellij/config.kdl".source = lib.mkForce ../assets/zellij/config.kdl;
 }

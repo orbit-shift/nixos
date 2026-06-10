@@ -16,6 +16,10 @@ in {
     # ── Nix 生态工具（nh, nixos-anywhere 等） ────
     ../system/units/nix.nix
 
+    # ── Home Manager 用户配置 ────
+    ../system/units/home-editors.nix
+    ../system/units/home-git.nix
+
     # (overlay 目录已移除，不再加载)
   ];
 
@@ -38,14 +42,10 @@ in {
     useUserPackages = true;
     extraSpecialArgs = { inherit user email nushellGitUrl nushellLocalPath; };
     users.${user} = {
-      imports = [
-        ../home/units/editors.nix
-        ../home/units/git.nix
-        ../home/units/common.nix
-      ];
       home = {
         username = "${user}";
         homeDirectory = "/home/${user}";
+        stateVersion = "26.05";
       };
       programs.home-manager.enable = true;
       home.enableNixpkgsReleaseCheck = false;

@@ -67,9 +67,10 @@
       "--max-pods=500"
     ];
   in {
-  # ── Home Manager：管理员调试（Nushell、git 等） ──────
+  # ── 禁用 home-manager 的 neovim 模块（nixpkgs 25.11 中 neovimUtils.makeVimPackageInfo 已移除）──
+  # neovim 由系统级 NixOS 配置提供，插件由 lazy.nvim 管理
   home-manager.users.${user} = {
-    imports = [ ../home/headless.nix ];
+    programs.neovim.enable = lib.mkForce false;
   };
 
   # ── 自动证书管理 + Flannel + Proxy ─────────────────────

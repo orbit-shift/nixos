@@ -18,9 +18,6 @@ let
 
     commonArgs.inputs.disko.nixosModules.disko
 
-    # 核心系统预设 (所有节点默认加载)
-    ../modules/system/core.nix
-
     # Home Manager 集成
     homeManagerInput.nixosModules.home-manager
     {
