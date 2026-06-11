@@ -1,21 +1,10 @@
 #!/usr/bin/env bash
 # Patch CoreDNS env to use cni0 bridge IP as KUBERNETES_SERVICE_HOST.
 # Variables @KUBECTL@ and @KUBECONFIG@ are injected by Nix replaceStrings.
-
-# Wait for cni0 interface to appear (created by Flannel Pod startup)
-echo "[coredns-patch] Waiting for cni0 interface..."
-for i in $(seq 1 100); do
-  if ip link show cni0 >/dev/null 2>&1; then
-    echo "[coredns-patch] cni0 interface detected"
-    break
-  fi
-  if [ "$i" -eq 100 ]; then
-    echo "[coredns-patch] ERROR: cni0 interface not found after 300s"
-    exit 1
-  fi
-  echo "[coredns-patch] Attempt $i/100, waiting for Flannel to create cni0..."
-  sleep 3
-done
+#
+# NOTE: This script assumes cni0 interface already exists.
+# The k8s-flannel-apply.service is responsible for ensuring cni0 is ready
+# before this service runs (via systemd requires dependency).
 
 # Get cni0 interface IP (API Server reachable via this on single-node)
 apiServerIP=$(ip -4 addr show cni0 2>/dev/null | grep -oP 'inet \K[\d.]+')
