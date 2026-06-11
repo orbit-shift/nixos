@@ -1,5 +1,5 @@
 # Kubernetes 通用配置（CRI-O / Containerd 公共部分）
-{ pkgs, lib, config, cni0IP, user, ... }: {
+{ pkgs, lib, config, cni0IP, user, publicDnsServers, ... }: {
   imports = [
     ../dev/server.nix
   ];
@@ -193,12 +193,30 @@
   # ── Kubelet（所有节点） ────────────────────────────────
   services.kubernetes.kubelet = {
     enable = true;
-    extraOpts = lib.concatStringsSep " " baseKubeletOpts;
+    extraOpts = lib.concatStringsSep " " (baseKubeletOpts ++ [
+      # 让 pod 内的 resolv.conf 直接指向公共 DNS
+      # 避免 pod 内 127.0.0.1 指向容器 loopback（无 DNS 服务）
+      # 宿主机 /etc/resolv.conf 可能指向本地 stub resolver（如 systemd-resolved 或本地 CoreDNS）
+      # 但 pod 内 127.0.0.1 是容器 loopback，无法访问宿主机本地 DNS
+      "--resolv-conf=/etc/kubelet-resolv.conf"
+    ]);
     # Pod DNS 配置：指向 kube-dns ClusterIP
     clusterDns = [ "10.0.0.254" ];
     # 集群内部域名后缀
     clusterDomain = "cluster.local";
   };
+
+  # ── kubelet resolv.conf ──
+  # 有宿主机 CoreDNS 时：指向 cni0IP（pod 通过 cni0 网桥访问宿主机 CoreDNS）
+  # 没有时：直接指向公共 DNS
+  environment.etc."kubelet-resolv.conf".text =
+    if config.services.coredns.enable or false then ''
+      nameserver ${cni0IP}
+      options ndots:5
+    '' else ''
+      ${lib.concatMapStringsSep "\n" (s: "nameserver ${s}") publicDnsServers}
+      options ndots:5
+    '';
 
   # ── CLI 工具 ───────────────────────────────────────────
   environment.systemPackages = with pkgs; [

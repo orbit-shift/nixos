@@ -50,6 +50,8 @@
       nushellSrc = my-nushell-config.outPath;
       nushellGitUrl = "https://github.com/${my-nushell-config.owner}/${my-nushell-config.repo}.git";
       nushellLocalPath = "/home/${user}/Configuration/nushell";
+      # 公共 DNS（地理位置相关：中国大陆）
+      publicDnsServers = [ "223.5.5.5" "119.29.29.29" "1.1.1.1" ];
     };
 
     # ── 通用构建器 ─────────────────────────────────────

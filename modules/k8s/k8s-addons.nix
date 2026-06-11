@@ -1,13 +1,16 @@
 # Kubernetes Addons（NixOS 声明式管理）
 # 纯 Nix 生成 YAML manifest，替代运行时 kubectl patch
 # 拆分成三个独立服务：Flannel CNI、CoreDNS patch、metrics-server
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, publicDnsServers, ... }:
 let
   cfg = config.services.kubernetes.addons;
   kubectl = "${pkgs.kubectl}/bin/kubectl";
+  ip = "${pkgs.iproute2}/bin/ip";
   kubeconfig = "/etc/kubernetes/cluster-admin.kubeconfig";
   apiServerIP = config.services.kubernetes.masterAddress;
   podCIDR = config.services.kubernetes.podCIDR;
+  # 公共 DNS 字符串（用于 shell 脚本）
+  publicDnsServersStr = lib.concatStringsSep " " publicDnsServers;
 
   assets = ./assets;
 
@@ -25,9 +28,14 @@ let
       (builtins.readFile "${assets}/flannel-cidr-patch.yaml")
   );
 
-  # ── CoreDNS env patch 脚本（含 @KUBECTL@ / @KUBECONFIG@ 占位符）─
+  # ── CoreDNS env patch 脚本（含 @KUBECTL@ / @KUBECONFIG@ / @IP@ / @FORWARD_TARGET@ 占位符）─
+  # 根据宿主机是否有 CoreDNS，生成不同的 forward 目标
+  forwardTarget =
+    if config.services.coredns.enable or false
+    then "@CNI0_IP@"  # 占位符，运行时替换为 cni0IP
+    else publicDnsServersStr;  # 公共 DNS
   patchCoreDNSScript = pkgs.writeShellScript "patch-coredns.sh" (
-    builtins.replaceStrings [ "@KUBECTL@" "@KUBECONFIG@" ] [ kubectl kubeconfig ]
+    builtins.replaceStrings [ "@KUBECTL@" "@KUBECONFIG@" "@IP@" "@FORWARD_TARGET@" ] [ kubectl kubeconfig ip forwardTarget ]
       (builtins.readFile "${assets}/patch-coredns.sh")
   );
 
@@ -58,7 +66,7 @@ let
 
     # 0. 清理 NixOS flannel 残留（旧系统激活后可能仍存在）
     echo "[k8s-flannel] Cleaning up stale NixOS flannel artifacts..."
-    ip link delete mynet 2>/dev/null && echo "[k8s-flannel] Deleted mynet bridge" || echo "[k8s-flannel] mynet not found (already clean)"
+    ${ip} link delete mynet 2>/dev/null && echo "[k8s-flannel] Deleted mynet bridge" || echo "[k8s-flannel] mynet not found (already clean)"
 
     # 1. 删除 NixOS k8s 模块自动创建的 User 类型 RBAC binding
     echo "[k8s-flannel] Removing conflicting flannel ClusterRoleBinding..."
@@ -98,7 +106,7 @@ let
     # 7. 等待 cni0 接口出现
     echo "[k8s-flannel] Waiting for cni0 interface..."
     for i in $(seq 1 100); do
-      if ip link show cni0 >/dev/null 2>&1; then
+      if ${ip} link show cni0 >/dev/null 2>&1; then
         echo "[k8s-flannel] cni0 interface detected"
         exit 0
       fi

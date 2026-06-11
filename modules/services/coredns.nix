@@ -167,7 +167,7 @@ in {
     };
   };
 
-  # ── 配置实现（导入即启用）─────────────────────────────
+  # ── 配置实现（引入即启用）─────────────────────────────
   config = {
     services.coredns = {
       enable = true;
@@ -183,6 +183,10 @@ in {
         }
       '';
     };
+
+    # ── 系统 DNS 指向本地 CoreDNS ────────────────────────
+    # 宿主机 CoreDNS 监听在 0.0.0.0:53，系统级解析通过 127.0.0.1
+    networking.nameservers = [ "127.0.0.1" ];
 
     # ── 关闭内置 DNS 解析服务（避免端口冲突）───────────
     services.resolved.enable = lib.mkIf cfg.disableSystemdResolved false;

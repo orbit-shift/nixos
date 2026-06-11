@@ -29,7 +29,7 @@ in {
         ../server/hardware/hardware-configuration.nix
         ../server/hardware/wireguard.nix
         # K8s 插件
-        ../../modules/k8s/coredns.nix
+        ../../modules/services/coredns.nix
       ];
 
       # CoreDNS 内网 DNS 服务

@@ -36,13 +36,13 @@ let
   ];
 
   # ── 条件注入：仅当节点提供静态 IP 且未启用 DHCP 时配置 eth0 ──────
+  # 注意：不设置 networking.nameservers，由模块自己决定（如 coredns.nix 设置 127.0.0.1）
   networkModule = lib.optional (builtins.hasAttr "ip" nodeAttrs && !(nodeAttrs.useDHCP or false)) {
     networking.interfaces.eth0.useDHCP = false;
     networking.interfaces.eth0.ipv4.addresses = [{
       address = nodeAttrs.ip;
       prefixLength = 24;
     }];
-    networking.nameservers = [ "1.1.1.1" "223.5.5.5" "119.29.29.29" ];
   };
 
   # ── 条件注入：设置主机名 ────────────────────────────
