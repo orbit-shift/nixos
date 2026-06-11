@@ -44,6 +44,4 @@
       terminal.shell.program = "nu";
     };
   };
-
-
 }

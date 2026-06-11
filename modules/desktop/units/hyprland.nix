@@ -174,11 +174,19 @@ in {
     ];
 
     home-manager.users.${user} = {
+      # ── 输入法环境变量 ──────────────────────────────────
+      home.sessionVariables = {
+        XMODIFIERS = "@im=fcitx";
+        GTK_IM_MODULE = "fcitx";
+        QT_IM_MODULE = "fcitx";
+      };
+
       xdg.configFile."hypr/hyprland.conf".text = ''
         # ── 1. 自动启动守护进程 (Exec-once) ───────────────────
         exec-once = mako
         exec-once = hyprpaper
         exec-once = nm-applet --indicator
+        exec-once = fcitx5 -d
 
         # 自启 Alt+Tab 后台服务 (按照最近聚焦 MRU 机制排序)
         exec-once = ${switcher-bin} init --show-title --init-sort-type "recently-focused" &
@@ -188,11 +196,17 @@ in {
         exec-once = wl-paste --type image --watch cliphist store
 
         # ── 2. 基础窗口与显示器配置 ──────────────────────────
-        monitor=,preferred,auto,1
+        monitor=,preferred,auto,2
+
+        # ── 2.0 键盘配置 ────────────────────────────────────
+        input {
+            kb_layout = us
+            kb_options = ctrl:swapcaps
+        }
 
         # ── 2.1 通用布局 ──────────────────────────────────
         general {
-            gaps_in = 1
+            gaps_in = 2
             gaps_out = 2
             border_size = 2
             col.active_border = rgba(f5a962ff)
@@ -238,11 +252,58 @@ in {
         # ── 5. 其他基础功能快捷键 ───────────────────────────
         bind = SUPER, q, exec, flameshot gui || grim -g "$(slurp)" - | swappy -f -
 
+        # ── 7. 电源/退出菜单 ───────────────────────────────────
+        bind = SUPER SHIFT, q, exec, wlogout
+
+        # ── 8. 应用启动器 ──────────────────────────────────────
+        bind = SUPER, SPACE, exec, wofi --show drun
+
+        # ── 9. 工作区切换 ──────────────────────────────────────
+        bind = SUPER, 1, workspace, 1
+        bind = SUPER, 2, workspace, 2
+        bind = SUPER, 3, workspace, 3
+        bind = SUPER, 4, workspace, 4
+        bind = SUPER, 5, workspace, 5
+        bind = SUPER, 6, workspace, 6
+        bind = SUPER, 7, workspace, 7
+        bind = SUPER, 8, workspace, 8
+        bind = SUPER, 9, workspace, 9
+        bind = SUPER, 0, workspace, 10
+
+        bind = SUPER SHIFT, 1, movetoworkspace, 1
+        bind = SUPER SHIFT, 2, movetoworkspace, 2
+        bind = SUPER SHIFT, 3, movetoworkspace, 3
+        bind = SUPER SHIFT, 4, movetoworkspace, 4
+        bind = SUPER SHIFT, 5, movetoworkspace, 5
+        bind = SUPER SHIFT, 6, movetoworkspace, 6
+        bind = SUPER SHIFT, 7, movetoworkspace, 7
+        bind = SUPER SHIFT, 8, movetoworkspace, 8
+        bind = SUPER SHIFT, 9, movetoworkspace, 9
+        bind = SUPER SHIFT, 0, movetoworkspace, 10
+
+        # ── 10. 窗口焦点切换（方向键） ─────────────────────────
+        bind = SUPER, left, movefocus, l
+        bind = SUPER, right, movefocus, r
+        bind = SUPER, up, movefocus, u
+        bind = SUPER, down, movefocus, d
+
+        # ── 11. 窗口位置移动（方向键） ─────────────────────────
+        bind = SUPER SHIFT, left, movewindow, l
+        bind = SUPER SHIFT, right, movewindow, r
+        bind = SUPER SHIFT, up, movewindow, u
+        bind = SUPER SHIFT, down, movewindow, d
+
         # ─ 6. 窗口规则 ──────────────────────────────────
         windowrule = match:class ^(mpv)$, float on, size 1280 720, center on
       '';
 
       xdg.configFile."hypr/apps.yaml".source = ../assets/hypr/apps.yaml;
+
+      # ── Mako 通知配置 ──────────────────────────────────────
+      xdg.configFile."mako/config".text = ''
+        border-radius=10
+        padding=10
+      '';
     };
   };
 }
