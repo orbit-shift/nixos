@@ -27,7 +27,6 @@ let
         useUserPackages = true;
         extraSpecialArgs = commonArgs
           // lib.optionalAttrs (builtins.hasAttr "user" nodeAttrs) { user = nodeAttrs.user; };
-        backupFileExtension = "hm-backup";
         # 关闭 nixpkgs 版本不匹配警告（unstable 滚动更新，版本号永远不一致）
         sharedModules = [
           { home.enableNixpkgsReleaseCheck = false; }

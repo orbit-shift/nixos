@@ -26,10 +26,9 @@ in
           source = config.lib.file.mkOutOfStoreSymlink nvimLocalPath;
           force = true;
         } else {
-          # 服务器/只读模式：从 flake input 部署
+          # 服务器/只读模式：从 flake input 部署（单个 symlink 指向 store）
           source = nvimSrc;
           force = true;
-          recursive = true;
         };
 
         # 非开发模式：activation script 初始化 lazy.nvim 插件

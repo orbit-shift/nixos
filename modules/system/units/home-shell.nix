@@ -27,10 +27,9 @@ in
           source = config.lib.file.mkOutOfStoreSymlink nushellLocalPath;
           force = true;
         } else {
-          # 服务器/只读模式：从 flake input 正常部署（in-store）
+          # 服务器/只读模式：从 flake input 部署（单个 symlink 指向 store）
           source = nushellSrc;
           force = true;
-          recursive = true;
         };
       })
     ];
