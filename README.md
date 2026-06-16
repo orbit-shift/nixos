@@ -213,6 +213,8 @@ k8s-libs.nix → expandCluster → buildNode
   └── node.imports               ← 节点特有导入（硬件、wireguard 等）
 ```
 
+**证书管理**：证书权限 0600，kubeconfig 通过脚本自动生成。详见 [ADR-013: K8s 证书管理](docs/adr/013-k8s-certificate-management.md)。
+
 **k8s-dev/dxserver 示例**：
 ```
 hosts/k8s-dev/default.nix

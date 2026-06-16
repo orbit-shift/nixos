@@ -279,34 +279,30 @@
     lib.filterAttrs (name: user: user.isNormalUser or false) config.users.users
   );
 
-  # 修复证书文件权限，让 kubernetes 组可以读取
-  # NixOS kubernetes 模块硬编码私钥权限为 0600，组成员无法读取
-  systemd.services.fix-k8s-cert-permissions = {
-    description = "Fix Kubernetes certificate permissions for group access";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "certmgr.service" ];
+  # ── 自动生成 kubeconfig ─────────────────────────────────
+  # 当证书文件更新时，自动生成 kubeconfig 文件
+  # 使用 systemd path 监控证书文件变化
+  systemd.services.generate-kubeconfig = {
+    description = "Generate kubeconfig when certificates are updated";
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
+      RemainAfterExit = false;
     };
-    script = ''
-      set -euo pipefail
-      SECRETS_DIR="/var/lib/kubernetes/secrets"
-
-      # 等待证书文件生成
-      for i in $(seq 1 30); do
-        if [ -f "$SECRETS_DIR/cluster-admin.pem" ]; then
-          break
-        fi
-        sleep 2
-      done
-
-      # 修改私钥文件权限，让 kubernetes 组可以读取
-      if [ -d "$SECRETS_DIR" ]; then
-        find "$SECRETS_DIR" -name "*-key.pem" -exec chmod 640 {} \;
-        echo "[fix-k8s-cert-permissions] Fixed permissions for private keys"
-      fi
+    script = let
+      scriptPath = "${pkgs.writeShellScript "generate-kubeconfig" (builtins.readFile ./assets/generate-kubeconfig.sh)}";
+    in ''
+      ${scriptPath} /home/${user}/.kube/config kubernetes https://localhost:6443
+      echo "[generate-kubeconfig] kubeconfig updated at $(date)"
     '';
+  };
+
+  systemd.paths.generate-kubeconfig = {
+    description = "Watch for Kubernetes certificate changes";
+    wantedBy = [ "multi-user.target" ];
+    pathConfig = {
+      PathModified = "/var/lib/kubernetes/secrets/cluster-admin.pem";
+      Unit = "generate-kubeconfig.service";
+    };
   };
 
   # ── 禁用 NixOS 自动 flannel（改由 k8s-addons.nix 声明式部署） ──
