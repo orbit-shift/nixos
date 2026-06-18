@@ -12,9 +12,6 @@
   # ── Kernel ───────────────────────────────────────────────
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # ── Network ──────────────────────────────────────────────
-  networking.networkmanager.enable = true;
-
   # ── Audio ────────────────────────────────────────────────
   services.pipewire = {
     enable = true;

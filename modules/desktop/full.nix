@@ -13,6 +13,7 @@
     ./units/hyprland.nix
     ./units/input-method.nix
     ./units/laptop.nix
+    ./units/networkmanager.nix
     ./units/rime.nix
   ];
 

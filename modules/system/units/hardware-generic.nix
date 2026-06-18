@@ -17,10 +17,6 @@
   # 每周批量 TRIM，通知 SSD 清理已删除数据块，保持写入速度并延长寿命
   services.fstrim.enable = true;
 
-  # ── 网络与存储管理 ────────────────────────────────
-  # NetworkManager 提供通用的网络配置能力
-  networking.networkmanager.enable = true;
-
   # ── 性能与体验 ───────────────────────────────────
   # 启用 zram 交换，提升低内存环境下的响应速度
   zramSwap.enable = true;

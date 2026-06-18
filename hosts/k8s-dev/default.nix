@@ -21,6 +21,7 @@ in {
     dxserver = {
       hostname = "dxserver";
       ip = "172.178.5.123";
+      # 路由器端 DHCP 保留固定地址，同时通过 DHCP 下发 DNS 等网络参数
       useDHCP = true;
       role = "combo";
       imports = [
