@@ -74,7 +74,7 @@
     libguestfs          # 提供 virt-install, virt-resize 等工具
     libvirt             # 提供 virsh 命令
     virt-viewer         # 用于连接 GUI 画面 (SPICE)
-    virtio-win          # Windows 驱动 ISO
+    # virtio-win          # Windows 驱动 ISO
   ];
 
   # 5. 可选：开启内置的简单桌面显示支持
