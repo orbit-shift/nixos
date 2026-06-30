@@ -170,53 +170,6 @@
     "--requestheader-username-headers=X-Remote-User"
   ];
 
-  # ── 修复 apiserver v1.36 PEM 序列化 bug ──────────────────
-  # apiserver 写 extension-apiserver-authentication ConfigMap 时，
-  # requestheader-client-ca-file 的 PEM 换行可能被吞掉变成空格，
-  # 导致 metrics-server 无法验证代理请求。
-  # 此服务在 apiserver 启动后检测并修复。
-  systemd.services.fix-extension-apiserver-auth-certs = lib.mkIf (builtins.elem "master" config.services.kubernetes.roles) {
-    description = "Fix apiserver extension-apiserver-authentication ConfigMap PEM serialization bug";
-    after = [ "kube-apiserver.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = let
-      kubectl = "${pkgs.kubectl}/bin/kubectl --kubeconfig=/etc/kubernetes/cluster-admin.kubeconfig";
-      jq = "${pkgs.jq}/bin/jq";
-    in ''
-      set -euo pipefail
-      CM="extension-apiserver-authentication"
-      NS="kube-system"
-
-      # 等待 apiserver 就绪
-      echo "[fix-ext-api-certs] Waiting for apiserver..."
-      for i in $(seq 1 30); do
-        if ${kubectl} get configmap $CM -n $NS >/dev/null 2>&1; then
-          break
-        fi
-        sleep 2
-      done
-
-      # 检查 requestheader-client-ca-file 行数
-      LINES=$(${kubectl} get configmap $CM -n $NS -o jsonpath='{.data.requestheader-client-ca-file}' | wc -l)
-      echo "[fix-ext-api-certs] requestheader-client-ca-file has $LINES lines"
-
-      if [ "$LINES" -lt 3 ]; then
-        echo "[fix-ext-api-certs] PEM corrupted (lines < 3), fixing..."
-        CLIENT_CA=$(${kubectl} get configmap $CM -n $NS -o jsonpath='{.data.client-ca-file}')
-        ${kubectl} get configmap $CM -n $NS -o json | \
-          ${jq} --arg pem "$CLIENT_CA" '.data["requestheader-client-ca-file"] = $pem' | \
-          ${kubectl} apply -f -
-        echo "[fix-ext-api-certs] Fixed."
-      else
-        echo "[fix-ext-api-certs] PEM OK, no fix needed."
-      fi
-    '';
-  };
-
   # ── k8s 所需内核模块 ────────────────────────────────────
   boot.kernelModules = [ "overlay" "br_netfilter" ];
 
