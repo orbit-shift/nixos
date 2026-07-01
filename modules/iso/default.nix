@@ -29,7 +29,7 @@ in {
     # ── 网络与传输 ──
     git curl wget rsync socat netcat-openbsd minio-client
     # ── 文件与系统工具 ──
-    util-linux jq tree file unzip fd ripgrep bind dust
+    util-linux jq tree file unzip fd ripgrep sd bind dust
     # ── 终端与编辑器 ──
     nushell delta zellij helix
     # ── 磁盘与网络 ──

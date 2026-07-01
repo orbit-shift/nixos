@@ -66,7 +66,7 @@
       git curl wget rsync socat netcat-openbsd
       # ── 文件与系统工具 ──
       util-linux  # mount, fdisk, lsblk 等
-      jq tree file unzip fd ripgrep bind dust  # bind: dig, nslookup
+      jq tree file unzip fd ripgrep sd bind dust  # bind: dig, nslookup
 
       # ── 终端与编辑器 ──
       nushell  # 现代 Shell
