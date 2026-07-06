@@ -82,10 +82,10 @@
     },
     "my-nushell-config": {
       "locked": {
-        "lastModified": 1781602260,
-        "narHash": "sha256-Zbj25NjENUrbgHFlBZEdT1QiBUT0a2LtC5v/r7jQHaQ=",
+        "lastModified": 1783322076,
+        "narHash": "sha256-OVs1HEEvgY/EfYtpnZnzipiIs0DzT3DyjowV4Dvitso=",
         "ref": "refs/heads/main",
-        "rev": "91f8cc181e038104fe736d1e8f7af2319f5be983",
+        "rev": "a0318ce92642a131b42768cfa1744b248041e06e",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/fj0r/nushell"
