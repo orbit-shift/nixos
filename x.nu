@@ -58,6 +58,7 @@ export module mount {
         sudo mount -o compress=zstd,subvol=@swap,noatime $root /mnt/swap
     }
 }
+export use mount
 
 export def mount [
     file: path
@@ -155,6 +156,7 @@ export module utils {
         sudo rm -f $link
     }
 }
+export use utils
 
 export def deployment [
     host: string@cmpl-hosts
@@ -252,3 +254,4 @@ export module qemu {
         remote-viewer spice://127.0.0.1:5900
     }
 }
+export use qemu
