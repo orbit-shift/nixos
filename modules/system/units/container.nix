@@ -19,13 +19,8 @@
     engine.multi_image_archive = true;
   };
 
-  # Podman storage 配置（系统级多用户共享路径，与 Containerd 隔离避免锁冲突）
-  environment.etc."containers/storage.conf".text = lib.mkForce ''
-    [storage]
-    driver = "overlay"
-    runroot = "/run/containers/storage"
-    graphroot = "/var/lib/containers/storage"
-  '';
+  # Podman storage：使用 NixOS 默认路径（/run/containers/storage + /var/lib/containers/storage）
+  # Rootless 构建通过 ~/.config/containers/storage.conf 覆盖为用户级路径
   # ── 用户环境变量（容器相关）─────────────────────────────
   # 为用户环境设置 DOCKER_HOST，让某些工具以为在用 Docker
   environment.sessionVariables = {
