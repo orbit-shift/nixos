@@ -29,25 +29,36 @@ let
     };
   }) registriesData.insecureRegistries);
 
-  # Podman/CRI-O registries.conf TOML
-  registriesConf = ''
-    unqualified-search-registries = ["docker.io"]
-
-    # 代理镜像配置
-  '' + lib.concatStringsSep "\n" (lib.mapAttrsToList (prefix: location: ''
-    [[registry]]
-    prefix = "${prefix}"
-    location = "${location}"
-  '') registriesData.proxyRegistries) + "\n\n" +
-  lib.concatStringsSep "\n" (map (loc: ''
-    [[registry]]
-    insecure = true
-    location = "${loc}"
-  '') registriesData.insecureRegistries) + "\n";
+  # Podman/CRI-O — podman 6 重写了配置解析，改用 registries.conf.d/ drop-in 目录
+  registriesDropin =
+    # 默认检索注册表
+    { "containers/registries.conf.d/01-unqualified-search.conf".text = ''
+        unqualified-search-registries = ["docker.io"]
+      '';
+    } //
+    # 代理镜像配置（每个前缀一个文件）
+    (lib.mapAttrs' (prefix: location: {
+      name = "containers/registries.conf.d/50-proxy-${lib.replaceStrings ["." ":"] ["-" "-"] prefix}.conf";
+      value.text = ''
+        [[registry]]
+        prefix = "${prefix}"
+        location = "${location}"
+      '';
+    }) registriesData.proxyRegistries) //
+    # 不安全注册表（每个注册表一个文件，prefix 匹配 + location 强制 :80 走 HTTP）
+    (lib.listToAttrs (map (loc:
+      let target = if lib.hasInfix ":" loc then loc else "${loc}:80"; in {
+      name = "containers/registries.conf.d/99-insecure-${lib.replaceStrings ["." ":"] ["-" "-"] loc}.conf";
+      value.text = ''
+        [[registry]]
+        prefix = "${loc}"
+        location = "${target}"
+        insecure = true
+      '';
+    }) registriesData.insecureRegistries));
 
 in {
   environment.etc =
     (if runtime == "containerd" then containerdTomls else {}) //
-    # 始终生成 registries.conf（Podman/nerdctl 等工具需要此文件）
-    { "containers/registries.conf".text = lib.mkForce registriesConf; };
+    registriesDropin;
 }
