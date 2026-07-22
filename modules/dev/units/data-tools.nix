@@ -4,7 +4,6 @@
     pkgs.postgresql
     pkgs.mysql84
     pkgs.duckdb
-    pkgs.surrealist
 
     # Data Science Python 库 (polars, lancedb)
     (pkgs.python3.withPackages (ps: with ps; [
