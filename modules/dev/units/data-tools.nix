@@ -2,7 +2,7 @@
   # 数据库客户端工具 + 数据分析 Python 环境
   environment.systemPackages = [
     pkgs.postgresql
-    pkgs.mysql84
+    # pkgs.mysql84
     pkgs.duckdb
 
     # Data Science Python 库 (polars, lancedb)
